@@ -3,7 +3,7 @@
  * Catálogo cacheado + actualizaciones silenciosas en segundo plano.
  * Al desplegar cambios, incrementa CACHE_VERSION.
  */
-const CACHE_VERSION = 'leodri-v21';
+const CACHE_VERSION = 'leodri-v22';
 
 const PRECACHE_URLS = [
     './',

@@ -1741,6 +1741,52 @@ body.ficha-detalles-abierta {
     }
 }
 
+.construccion-header {
+    max-width: var(--catalogo-max);
+    margin: 0 auto;
+    padding: 20px 16px 8px;
+}
+
+.construccion-header__logo {
+    display: inline-flex;
+    line-height: 0;
+}
+
+.construccion-header__logo-img {
+    display: block;
+    width: auto;
+    height: 48px;
+    max-width: min(240px, 70vw);
+}
+
+.construccion__entrega {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--negro);
+}
+
+.construccion__entrega-icono {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+@media (min-width: 768px) {
+    .construccion-header {
+        padding: 24px 20px 12px;
+    }
+
+    .construccion-header__logo-img {
+        height: 56px;
+        max-width: 320px;
+    }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Home — sección de productos por categoría                                  */
 /* -------------------------------------------------------------------------- */
