@@ -40,7 +40,7 @@
 
     <meta name="mobile-web-app-capable" content="yes">
 
-    <title>LEODRI — Calzado que marca tu camino</title>
+    <title>LEODRI — Calzado que marca tu camino - Cambio de dominio</title>
 
     <link rel="manifest" href="manifest.webmanifest">
 
