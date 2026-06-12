@@ -1,0 +1,196 @@
+{
+    "productos": [
+        {
+            "id": "1",
+            "marca": "KidsFoot",
+            "nombre": "Zapatillas Niño Spider Light",
+            "descripcion": "Haz que sus aventuras diarias sean más divertidas y cómodas con estas zapatillas de diseño heroico.",
+            "bullets": ["Luces LED", "Suela antideslizante", "Diseño Spider"],
+            "tags": ["Niño", "Running"],
+            "precio": 89.9,
+            "color_default": "RJN",
+            "colores": [
+                {
+                    "codigo": "RJN",
+                    "etiqueta": "rojo y negro",
+                    "imagen": "assets/demo/hero-rjn.png",
+                    "alt": "KidsFoot Spider Light rojo y negro",
+                    "sku_base": "KDF-SPL-RJN-LED-{talla}",
+                    "sku_sin_talla": "KDF-SPL-RJN-LED-21"
+                },
+                {
+                    "codigo": "GRY",
+                    "etiqueta": "gris y negro",
+                    "imagen": "assets/demo/color-gry.png",
+                    "alt": "KidsFoot Spider Light gris y negro",
+                    "sku_base": "KDF-SPL-GRY-LED-{talla}",
+                    "sku_sin_talla": "KDF-SPL-GRY-LED-21"
+                },
+                {
+                    "codigo": "TAN",
+                    "etiqueta": "beige y negro",
+                    "imagen": "assets/demo/color-tan.png",
+                    "alt": "KidsFoot Spider Light beige y negro",
+                    "sku_base": "KDF-SPL-TAN-LED-{talla}",
+                    "sku_sin_talla": "KDF-SPL-TAN-LED-21"
+                }
+            ],
+            "tallas": [
+                { "numero": "21", "disponible": true },
+                { "numero": "22", "disponible": true },
+                { "numero": "23", "disponible": false },
+                { "numero": "24", "disponible": true },
+                { "numero": "25", "disponible": false },
+                { "numero": "26", "disponible": true }
+            ],
+            "beneficios": [
+                {
+                    "icono": "zap",
+                    "titulo": "Luces LED de Larga Duración",
+                    "texto": "<strong>Diversión asegurada:</strong> Suelas tecnológicas con luces intermitentes que se activan automáticamente al caminar, correr o saltar, estimulando el movimiento del niño."
+                },
+                {
+                    "icono": "check",
+                    "titulo": "Cierre Autónomo (Velcro + Elástico)",
+                    "texto": "<strong>Fácil de poner:</strong> Diseñadas para fomentar su independencia. El ajuste de velcro premium permite que se las pongan y quiten solos en segundos."
+                },
+                {
+                    "icono": "wave",
+                    "titulo": "Malla Textil Transpirable",
+                    "texto": "<strong>Pies frescos siempre:</strong> Capa superior de mesh de alta ventilación que evita la acumulación de sudor y malos olores."
+                },
+                {
+                    "icono": "shoe",
+                    "titulo": "Suela Antideslizante de Alta Tracción",
+                    "texto": "<strong>Pasos seguros:</strong> Goma deportiva con ranuras profundas que garantizan un agarre firme en patios y veredas."
+                },
+                {
+                    "icono": "shield",
+                    "titulo": "Puntera Reforzada contra Impactos",
+                    "texto": "<strong>Mayor durabilidad:</strong> Protección extra en la zona de los dedos para resistir tropiezos y el desgaste del juego diario."
+                }
+            ]
+        },
+        {
+            "id": "2",
+            "marca": "ByteStep",
+            "nombre": "Zapatillas Niño Urban Flex",
+            "descripcion": "Estilo urbano y comodidad todo el día. Ideales para el colegio, el parque y el fin de semana.",
+            "bullets": ["Plantilla acolchada", "Ligeras y flexibles", "Estilo urbano"],
+            "tags": ["Niño", "Urban"],
+            "precio": 79.9,
+            "color_default": "GRY",
+            "colores": [
+                {
+                    "codigo": "GRY",
+                    "etiqueta": "gris y negro",
+                    "imagen": "assets/demo/color-gry.png",
+                    "alt": "ByteStep Urban Flex gris y negro",
+                    "sku_base": "BTS-URB-GRY-{talla}",
+                    "sku_sin_talla": "BTS-URB-GRY-22"
+                },
+                {
+                    "codigo": "TAN",
+                    "etiqueta": "beige y arena",
+                    "imagen": "assets/demo/color-tan.png",
+                    "alt": "ByteStep Urban Flex beige y arena",
+                    "sku_base": "BTS-URB-TAN-{talla}",
+                    "sku_sin_talla": "BTS-URB-TAN-22"
+                }
+            ],
+            "tallas": [
+                { "numero": "22", "disponible": true },
+                { "numero": "23", "disponible": true },
+                { "numero": "24", "disponible": true },
+                { "numero": "25", "disponible": true },
+                { "numero": "26", "disponible": false },
+                { "numero": "27", "disponible": true }
+            ],
+            "beneficios": [
+                {
+                    "icono": "shoe",
+                    "titulo": "Suela Flexible Ultraligera",
+                    "texto": "<strong>Movimiento natural:</strong> Espuma EVA que acompaña cada paso sin cansar el pie en jornadas largas."
+                },
+                {
+                    "icono": "check",
+                    "titulo": "Ajuste Rápido con Velcro",
+                    "texto": "<strong>Autonomía diaria:</strong> Cierre doble que se adapta al empeine y facilita que el niño se calce solo."
+                },
+                {
+                    "icono": "wave",
+                    "titulo": "Interior Acolchado Suave",
+                    "texto": "<strong>Confort inmediato:</strong> Forro textil que reduce rozaduras desde el primer uso."
+                },
+                {
+                    "icono": "shield",
+                    "titulo": "Diseño Urbano Resistente",
+                    "texto": "<strong>Para el día a día:</strong> Materiales pensados para soportar el ritmo del colegio y el juego."
+                }
+            ]
+        },
+        {
+            "id": "3",
+            "marca": "KidsFoot",
+            "nombre": "Zapatillas Niña Cosmo Star",
+            "descripcion": "Brillo y comodidad en cada paso. Un modelo favorito para las pequeñas que aman destacar con estilo.",
+            "bullets": ["Detalles glitter", "Amortiguación suave", "Fácil de combinar"],
+            "tags": ["Niña", "Casual"],
+            "precio": 94.9,
+            "color_default": "RJN",
+            "colores": [
+                {
+                    "codigo": "RJN",
+                    "etiqueta": "coral y rosa",
+                    "imagen": "assets/demo/hero-rjn.png",
+                    "alt": "KidsFoot Cosmo Star coral y rosa",
+                    "sku_base": "KDF-COS-RJN-{talla}",
+                    "sku_sin_talla": "KDF-COS-RJN-24"
+                },
+                {
+                    "codigo": "TAN",
+                    "etiqueta": "dorado y crema",
+                    "imagen": "assets/demo/color-tan.png",
+                    "alt": "KidsFoot Cosmo Star dorado y crema",
+                    "sku_base": "KDF-COS-TAN-{talla}",
+                    "sku_sin_talla": "KDF-COS-TAN-24"
+                }
+            ],
+            "tallas": [
+                { "numero": "24", "disponible": true },
+                { "numero": "25", "disponible": true },
+                { "numero": "26", "disponible": true },
+                { "numero": "27", "disponible": false },
+                { "numero": "28", "disponible": true },
+                { "numero": "29", "disponible": true }
+            ],
+            "beneficios": [
+                {
+                    "icono": "zap",
+                    "titulo": "Detalles Glitter Premium",
+                    "texto": "<strong>Estilo que enamora:</strong> Acabados brillantes que mantienen su aspecto lavado tras lavado."
+                },
+                {
+                    "icono": "shoe",
+                    "titulo": "Amortiguación Cloud Step",
+                    "texto": "<strong>Pisada suave:</strong> Entresuela que absorbe impactos en saltos y juegos en el parque."
+                },
+                {
+                    "icono": "wave",
+                    "titulo": "Upper Transpirable",
+                    "texto": "<strong>Frescura todo el día:</strong> Tejido técnico que deja circular el aire sin perder soporte."
+                },
+                {
+                    "icono": "check",
+                    "titulo": "Calce Seguro y Fácil",
+                    "texto": "<strong>Sin complicaciones:</strong> Sistema de ajuste que mantiene el pie firme y facilita el calzado."
+                },
+                {
+                    "icono": "shield",
+                    "titulo": "Construcción Reforzada",
+                    "texto": "<strong>Hechas para jugar:</strong> Costuras reforzadas en zonas de mayor desgaste."
+                }
+            ]
+        }
+    ]
+}
