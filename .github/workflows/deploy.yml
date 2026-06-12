@@ -3,7 +3,7 @@ name: Deploy Web Automático
 on:
   push:
     branches:
-      - principal
+      - main
 
 jobs:
   web-deploy:
