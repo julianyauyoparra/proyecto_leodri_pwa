@@ -99,10 +99,10 @@ ul {
     max-width: var(--catalogo-max);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
+    gap: 8px;
+    padding: 10px 12px;
 }
 
 .tienda-cabecera__marca {
@@ -121,8 +121,10 @@ ul {
 .tienda-cabecera__logo {
     display: block;
     width: auto;
-    height: 48px;
-    max-width: min(240px, 58vw);
+    height: 40px;
+    max-width: min(180px, 44vw);
+    object-fit: contain;
+    object-position: left center;
 }
 
 .tienda-cabecera__buscar {
@@ -130,6 +132,7 @@ ul {
     display: flex;
     align-items: center;
     width: 100%;
+    min-width: 0;
     max-width: 100%;
 }
 
@@ -147,20 +150,25 @@ ul {
 
 .tienda-cabecera__buscar-icono {
     position: absolute;
-    left: 14px;
+    left: 10px;
     display: flex;
     color: var(--gris-500);
     pointer-events: none;
 }
 
+.tienda-cabecera__buscar-icono svg {
+    width: 16px;
+    height: 16px;
+}
+
 .tienda-cabecera__buscar-input {
     width: 100%;
-    height: 44px;
-    padding: 0 16px 0 42px;
+    height: 38px;
+    padding: 0 10px 0 34px;
     border: 1px solid var(--gris-300);
     border-radius: 4px;
     font: inherit;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     color: var(--negro);
     background: var(--blanco);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -181,19 +189,20 @@ ul {
     align-items: center;
     gap: 10px;
     margin: 0;
-    justify-self: center;
+    justify-self: end;
     text-align: left;
 }
 
 .tienda-cabecera__entrega-icono {
     flex-shrink: 0;
     display: block;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     object-fit: contain;
 }
 
 .tienda-cabecera__entrega-texto {
+    display: none;
     font-size: 0.8125rem;
     font-weight: 500;
     line-height: 1.25;
@@ -1524,13 +1533,35 @@ body.ficha-beneficios-abierto {
     }
 
     .tienda-cabecera__logo {
+        width: auto;
         height: 56px;
         max-width: 320px;
+        object-fit: initial;
+        object-position: initial;
+    }
+
+    .tienda-cabecera__buscar-input {
+        height: 44px;
+        padding: 0 16px 0 42px;
+        font-size: 0.9375rem;
+    }
+
+    .tienda-cabecera__buscar-icono {
+        left: 14px;
+    }
+
+    .tienda-cabecera__buscar-icono svg {
+        width: 18px;
+        height: 18px;
     }
 
     .tienda-cabecera__entrega-icono {
         width: 40px;
         height: 40px;
+    }
+
+    .tienda-cabecera__entrega-texto {
+        display: block;
     }
 
     .tienda-cabecera__buscar {

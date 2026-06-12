@@ -16,11 +16,11 @@ $mostrarHeroBanner = $mostrarHeroBanner ?? false;
         <div class="tienda-cabecera__inner">
             <a href="<?= h($tiendaBase === '' ? './' : $tiendaBase) ?>" class="tienda-cabecera__marca" aria-label="LEODRI — Inicio">
                 <img
-                    src="<?= h($tiendaBase) ?>assets/logo-leodri-oficial.webp"
+                    src="<?= h($tiendaBase) ?>assets/logo-leodri-oficial.png"
                     alt="LEODRI — Calzado que marca tu camino"
                     class="tienda-cabecera__logo"
-                    width="845"
-                    height="167"
+                    width="1024"
+                    height="321"
                 >
             </a>
 
@@ -44,7 +44,7 @@ $mostrarHeroBanner = $mostrarHeroBanner ?? false;
                 >
             </form>
 
-            <p class="tienda-cabecera__entrega">
+            <p class="tienda-cabecera__entrega" aria-label="Te entregamos en tu domicilio">
                 <img
                     src="<?= h($tiendaBase) ?>assets/icono-entrega-domicilio.png"
                     alt=""

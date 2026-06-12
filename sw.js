@@ -3,7 +3,7 @@
  * Catálogo cacheado + actualizaciones silenciosas en segundo plano.
  * Al desplegar cambios, incrementa CACHE_VERSION.
  */
-const CACHE_VERSION = 'leodri-v40';
+const CACHE_VERSION = 'leodri-v46';
 
 const PRECACHE_URLS = [
     './',
@@ -23,7 +23,7 @@ const PRECACHE_URLS = [
     './assets/icons/icon-192.png',
     './assets/icons/icon-512.png',
     './assets/icons/apple-touch-icon.png',
-    './assets/logo-leodri-oficial.webp',
+    './assets/logo-leodri-oficial.png',
     './assets/logo-leodri-blanco.webp',
     './assets/icono-entrega-domicilio.png',
     './assets/demo/hero-rjn.png',

@@ -33,11 +33,11 @@
     <header class="construccion-header">
         <a href="./" class="construccion-header__logo" aria-label="LEODRI — Inicio">
             <img
-                src="assets/logo-leodri-oficial.webp"
+                src="assets/logo-leodri-oficial.png"
                 alt="LEODRI — Calzado que marca tu camino"
                 class="construccion-header__logo-img"
-                width="845"
-                height="167"
+                width="1024"
+                height="321"
             >
         </a>
     </header>

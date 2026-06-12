@@ -51,15 +51,15 @@ function admin_layout_inicio(string $titulo, bool $mostrarNav = true, string $cl
 
                 <img
 
-                    src="../assets/logo-leodri-oficial.webp"
+                    src="../assets/logo-leodri-oficial.png"
 
                     alt="LEODRI — Calzados que dirigen tu camino"
 
                     class="admin-header__logo-img"
 
-                    width="280"
+                    width="1024"
 
-                    height="55"
+                    height="321"
 
                 >
 

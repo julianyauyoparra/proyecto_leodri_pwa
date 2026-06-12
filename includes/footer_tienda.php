@@ -33,8 +33,8 @@ $anioActual = (int) date('Y');
                 src="<?= h($tiendaBase) ?>assets/logo-leodri-blanco.webp"
                 alt="LEODRI — Calzado que marca tu camino"
                 class="tienda-footer__logo"
-                width="1024"
-                height="256"
+                width="721"
+                height="112"
                 loading="lazy"
                 decoding="async"
             >
