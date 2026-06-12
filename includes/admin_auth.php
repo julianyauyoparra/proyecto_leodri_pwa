@@ -303,8 +303,6 @@ function admin_parsear_producto_post(array $post): array
         'aplicar_descuento' => !empty($post['aplicar_descuento']),
         'serie' => series_normalizar((string) ($post['serie'] ?? 'escolar')),
         'color_default' => $colorDefault,
-        'activo' => !empty($post['activo']),
-        'orden' => (int) ($post['orden'] ?? 0),
         'colores' => $colores,
         'tallas' => $tallas,
         'beneficios' => $beneficios,

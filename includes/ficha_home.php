@@ -32,10 +32,6 @@ $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha']
     <div class="ficha__card ficha__card--home">
 
         <section class="ficha-galeria ficha-galeria--home" aria-label="Imagen del producto">
-            <?php if ($aplicarDescuento && $descuentoPct > 0): ?>
-                <span class="ficha-descuento ficha-descuento--home">-<?= $descuentoPct ?>%</span>
-            <?php endif; ?>
-
             <figure class="ficha-galeria__hero ficha-galeria__hero--home" aria-label="Opciones de imagen del producto">
                 <img
                     class="ficha-galeria__hero-img"
@@ -62,10 +58,15 @@ $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha']
         </section>
 
         <div class="ficha-precios ficha-precios--home" aria-label="Precios">
-            <p class="ficha-precios__actual"><?= h(formatear_precio($precio)) ?></p>
             <?php if ($aplicarDescuento && $precioAnterior > $precio): ?>
                 <p class="ficha-precios__anterior"><?= h(formatear_precio($precioAnterior)) ?></p>
             <?php endif; ?>
+            <div class="ficha-precios__fila">
+                <p class="ficha-precios__actual"><?= h(formatear_precio($precio)) ?></p>
+                <?php if ($aplicarDescuento && $descuentoPct > 0): ?>
+                    <span class="ficha-descuento ficha-descuento--home">-<?= $descuentoPct ?>%</span>
+                <?php endif; ?>
+            </div>
         </div>
 
         <section class="ficha-tallas ficha-tallas--home" aria-label="Selección de talla">
@@ -99,13 +100,21 @@ $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha']
                     ENT_QUOTES,
                     'UTF-8'
                 );
+                $etiquetaColor = trim((string) ($color['etiqueta'] ?? ''));
+                if ($etiquetaColor === '') {
+                    $etiquetaColor = trim((string) ($color['codigo'] ?? ''));
+                }
+                if ($etiquetaColor === '') {
+                    $etiquetaColor = 'Color ' . ((int) $idxColor + 1);
+                }
                 ?>
                 <button
                     type="button"
                     class="ficha-thumb ficha-thumb--home"
                     role="option"
                     aria-selected="false"
-                    aria-label="Color <?= (int) $idxColor + 1 ?>"
+                    aria-label="Color <?= h($etiquetaColor) ?>"
+                    title="<?= h($etiquetaColor) ?>"
                     data-color="<?= h($color['codigo'] ?? '') ?>"
                     data-sku-base="<?= h($color['sku_base'] ?? '') ?>"
                     data-sku-sin-talla="<?= h($color['sku_sin_talla'] ?? '') ?>"
@@ -115,6 +124,7 @@ $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha']
                     data-alt="<?= h($color['alt'] ?: $heroAlt) ?>"
                 >
                     <img src="<?= h($thumbUrl) ?>" alt="" width="56" height="56">
+                    <span class="ficha-thumb__tooltip"><?= h($etiquetaColor) ?></span>
                 </button>
             <?php endforeach; ?>
         </div>

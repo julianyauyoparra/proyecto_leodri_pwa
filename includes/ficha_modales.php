@@ -45,7 +45,24 @@ require_once __DIR__ . '/series_tallas.php';
 >
     <div class="ficha-lightbox__backdrop" data-lightbox-cerrar></div>
     <button type="button" class="ficha-lightbox__cerrar" aria-label="Cerrar imagen">&times;</button>
-    <figure class="ficha-lightbox__figure">
-        <img class="ficha-lightbox__img" src="" alt="">
-    </figure>
+    <div class="ficha-lightbox__viewport">
+        <button
+            type="button"
+            class="ficha-lightbox__nav ficha-lightbox__nav--prev"
+            aria-label="Imagen anterior"
+            hidden
+        >&lsaquo;</button>
+        <figure class="ficha-lightbox__figure">
+            <div class="ficha-lightbox__zoom-wrap">
+                <img class="ficha-lightbox__img" src="" alt="">
+            </div>
+        </figure>
+        <button
+            type="button"
+            class="ficha-lightbox__nav ficha-lightbox__nav--next"
+            aria-label="Imagen siguiente"
+            hidden
+        >&rsaquo;</button>
+    </div>
+    <p class="ficha-lightbox__contador" aria-live="polite" hidden></p>
 </div>

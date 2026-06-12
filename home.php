@@ -6,7 +6,9 @@
     <meta name="theme-color" content="#d80000">
     <meta name="robots" content="noindex, nofollow">
     <title>LEODRI — Vista previa tienda</title>
-    <link rel="icon" href="assets/icons/icon-192.png" type="image/png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="assets/icons/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,14 +18,13 @@
 
     <?php
     require_once __DIR__ . '/includes/categorias_tienda.php';
-    require_once __DIR__ . '/includes/catalogo.php';
     require_once __DIR__ . '/includes/repositorio_productos.php';
 
     $categoriaActiva = categoria_desde_request($_GET['categoria'] ?? null);
     $categoriaNavActiva = $categoriaActiva;
 
     try {
-        $productosHome = productos_listar_por_categoria($categoriaActiva, HOME_PRODUCTOS_MAX);
+        $productosHome = productos_listar_por_categoria($categoriaActiva);
     } catch (Throwable $e) {
         $productosHome = [];
     }
@@ -35,6 +36,10 @@
     <main class="tienda-principal" id="contenido-principal" aria-label="Contenido principal">
         <?php require __DIR__ . '/includes/seccion_categoria_home.php'; ?>
     </main>
+
+    <?php require __DIR__ . '/includes/seccion_medios_pago.php'; ?>
+
+    <?php require __DIR__ . '/includes/footer_tienda.php'; ?>
 
     <?php require __DIR__ . '/includes/ficha_modales.php'; ?>
 

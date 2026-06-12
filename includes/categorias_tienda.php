@@ -1,9 +1,6 @@
 <?php
 declare(strict_types=1);
 
-/** Máximo de productos visibles en la sección home por categoría */
-const HOME_PRODUCTOS_MAX = 8;
-
 /** Categoría por defecto en la home */
 const CATEGORIA_HOME_DEFAULT = 'zapatillas';
 

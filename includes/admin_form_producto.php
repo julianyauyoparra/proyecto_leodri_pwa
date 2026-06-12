@@ -14,7 +14,6 @@ $tagsTexto = implode(', ', $producto['tags'] ?? []);
     <input type="hidden" name="csrf" value="<?= h(admin_csrf_token()) ?>">
     <?php if (!$esNuevo): ?>
         <input type="hidden" name="id" value="<?= h((string) $producto['id']) ?>">
-        <input type="hidden" name="orden" value="<?= h((string) ($producto['orden'] ?? '0')) ?>">
     <?php endif; ?>
 
     <div class="admin-card">
@@ -67,11 +66,7 @@ $tagsTexto = implode(', ', $producto['tags'] ?? []);
         </div>
         <div class="admin-field admin-field--inline">
             <input type="checkbox" id="aplicar_descuento" name="aplicar_descuento" value="1" <?= !isset($producto['aplicar_descuento']) || $producto['aplicar_descuento'] ? 'checked' : '' ?>>
-            <label for="aplicar_descuento">Mostrar descuento en catálogo (precio tachado y badge)</label>
-        </div>
-        <div class="admin-field admin-field--inline">
-            <input type="checkbox" id="activo" name="activo" value="1" <?= !isset($producto['activo']) || $producto['activo'] ? 'checked' : '' ?>>
-            <label for="activo">Mostrar a clientes en el catálogo</label>
+            <label for="aplicar_descuento">Mostrar descuento en la tienda (precio tachado y badge)</label>
         </div>
         <div class="admin-field">
             <label for="bullets">Características destacadas</label>

@@ -18,7 +18,7 @@ function db_migrar_hero_banners(): void
                 ancho INT UNSIGNED NOT NULL DEFAULT 0,
                 alto INT UNSIGNED NOT NULL DEFAULT 0,
                 alt VARCHAR(255) NOT NULL DEFAULT \'\',
-                url_destino VARCHAR(500) NOT NULL DEFAULT \'catalogo.php\',
+                url_destino VARCHAR(500) NOT NULL DEFAULT \'home.php#tienda-productos\',
                 creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 KEY idx_hero_banners_creado (creado_en)
@@ -74,7 +74,7 @@ function banners_seed_por_defecto(): void
             'ancho' => $ancho,
             'alto' => $alto,
             'alt' => $defecto[1],
-            'url' => 'catalogo.php',
+            'url' => 'home.php#tienda-productos',
             'creado' => $creado,
         ]);
         $offset++;
@@ -105,7 +105,7 @@ function banners_listar_fallback(): array
             'ancho' => 1024,
             'alto' => 320,
             'alt' => '2x1 en zapatillas seleccionadas — promoción LEODRI',
-            'url_destino' => 'catalogo.php',
+            'url_destino' => 'home.php#tienda-productos',
         ],
         [
             'id' => 0,
@@ -113,7 +113,7 @@ function banners_listar_fallback(): array
             'ancho' => 1024,
             'alto' => 320,
             'alt' => '50% off en el segundo par de nueva colección',
-            'url_destino' => 'catalogo.php',
+            'url_destino' => 'home.php#tienda-productos',
         ],
         [
             'id' => 0,
@@ -121,7 +121,7 @@ function banners_listar_fallback(): array
             'ancho' => 1024,
             'alto' => 320,
             'alt' => 'Zapatillas desde S/ 99',
-            'url_destino' => 'catalogo.php',
+            'url_destino' => 'home.php#tienda-productos',
         ],
     ];
 }
@@ -229,7 +229,7 @@ function banners_eliminar(int $id): void
     $pdo->prepare('DELETE FROM hero_banners WHERE id = :id')->execute(['id' => $id]);
 }
 
-function banners_insertar(array $archivo, string $alt = '', string $urlDestino = 'catalogo.php'): int
+function banners_insertar(array $archivo, string $alt = '', string $urlDestino = 'home.php#tienda-productos'): int
 {
     $meta = banners_leer_archivo($archivo);
     $pdo = db();
@@ -239,7 +239,7 @@ function banners_insertar(array $archivo, string $alt = '', string $urlDestino =
         'ancho' => $meta['ancho'],
         'alto' => $meta['alto'],
         'alt' => $alt !== '' ? $alt : 'Promoción LEODRI',
-        'url' => $urlDestino !== '' ? $urlDestino : 'catalogo.php',
+        'url' => $urlDestino !== '' ? $urlDestino : 'home.php#tienda-productos',
     ]);
 
     $id = (int) $pdo->lastInsertId();
@@ -252,7 +252,7 @@ function banners_insertar(array $archivo, string $alt = '', string $urlDestino =
     return $id;
 }
 
-function banners_reemplazar_archivo(int $id, array $archivo, string $alt = '', string $urlDestino = 'catalogo.php'): void
+function banners_reemplazar_archivo(int $id, array $archivo, string $alt = '', string $urlDestino = 'home.php#tienda-productos'): void
 {
     $pdo = db();
     $stmt = $pdo->prepare('SELECT imagen FROM hero_banners WHERE id = :id LIMIT 1');
@@ -275,7 +275,7 @@ function banners_reemplazar_archivo(int $id, array $archivo, string $alt = '', s
         'ancho' => $meta['ancho'],
         'alto' => $meta['alto'],
         'alt' => $alt !== '' ? $alt : 'Promoción LEODRI',
-        'url' => $urlDestino !== '' ? $urlDestino : 'catalogo.php',
+        'url' => $urlDestino !== '' ? $urlDestino : 'home.php#tienda-productos',
         'id' => $id,
     ]);
 }
@@ -283,7 +283,7 @@ function banners_reemplazar_archivo(int $id, array $archivo, string $alt = '', s
 /**
  * @return array{accion:string, total:int}
  */
-function banners_subir(array $archivo, bool $mantenerTodas, string $alt = '', string $urlDestino = 'catalogo.php'): array
+function banners_subir(array $archivo, bool $mantenerTodas, string $alt = '', string $urlDestino = 'home.php#tienda-productos'): array
 {
     db_migrar_hero_banners();
     $lista = banners_listar();

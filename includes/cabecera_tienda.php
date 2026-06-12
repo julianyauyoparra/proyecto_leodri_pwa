@@ -6,7 +6,7 @@ require_once __DIR__ . '/helpers.php';
 /** @var string $tiendaBase Prefijo de ruta (ej. '' desde raíz PWA) */
 $tiendaBase = $tiendaBase ?? '';
 $buscarQuery = isset($buscarQuery) ? (string) $buscarQuery : (string) ($_GET['q'] ?? '');
-$buscarAction = $tiendaBase . 'catalogo.php';
+$buscarAction = $tiendaBase . 'home.php';
 /** @var bool $mostrarHeroBanner Mostrar carrusel bajo el menú (solo home) */
 $mostrarHeroBanner = $mostrarHeroBanner ?? false;
 ?>
@@ -16,11 +16,11 @@ $mostrarHeroBanner = $mostrarHeroBanner ?? false;
         <div class="tienda-cabecera__inner">
             <a href="<?= h($tiendaBase === '' ? './' : $tiendaBase) ?>" class="tienda-cabecera__marca" aria-label="LEODRI — Inicio">
                 <img
-                    src="<?= h($tiendaBase) ?>assets/logo-leodri-oficial.png"
+                    src="<?= h($tiendaBase) ?>assets/logo-leodri-oficial.webp"
                     alt="LEODRI — Calzado que marca tu camino"
                     class="tienda-cabecera__logo"
                     width="845"
-                    height="130"
+                    height="167"
                 >
             </a>
 

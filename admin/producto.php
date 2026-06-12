@@ -25,8 +25,6 @@ if ($esNuevo) {
         'precio_anterior' => 0,
         'aplicar_descuento' => true,
         'serie' => 'escolar',
-        'activo' => true,
-        'orden' => 0,
         'colores' => [
             [
                 'codigo_inventario' => '',

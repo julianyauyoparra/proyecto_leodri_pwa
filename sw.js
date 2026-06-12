@@ -3,12 +3,12 @@
  * Catálogo cacheado + actualizaciones silenciosas en segundo plano.
  * Al desplegar cambios, incrementa CACHE_VERSION.
  */
-const CACHE_VERSION = 'leodri-v22';
+const CACHE_VERSION = 'leodri-v40';
 
 const PRECACHE_URLS = [
     './',
     './index.php',
-    './catalogo.php',
+    './home.php',
     './index.html',
     './data/catalogo.json',
     './offline.html',
@@ -19,11 +19,12 @@ const PRECACHE_URLS = [
     './js/pwa.js',
     './js/hero.js',
     './js/home-categoria.js',
+    './assets/icons/favicon-32.png',
     './assets/icons/icon-192.png',
     './assets/icons/icon-512.png',
     './assets/icons/apple-touch-icon.png',
-    './assets/logo-leodri.svg',
-    './assets/logo-leodri-oficial.png',
+    './assets/logo-leodri-oficial.webp',
+    './assets/logo-leodri-blanco.webp',
     './assets/icono-entrega-domicilio.png',
     './assets/demo/hero-rjn.png',
     './assets/demo/color-gry.png',

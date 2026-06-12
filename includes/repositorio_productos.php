@@ -6,7 +6,21 @@ require_once __DIR__ . '/imagenes_producto.php';
 require_once __DIR__ . '/series_tallas.php';
 require_once __DIR__ . '/categorias_tienda.php';
 
-const CATALOGO_MAX_VISIBLE = 3;
+function db_migrar_quitar_activo_orden(): void
+{
+    $pdo = db();
+    $stmt = $pdo->query("SHOW COLUMNS FROM productos LIKE 'activo'");
+    if (!$stmt->fetch()) {
+        return;
+    }
+
+    $indices = $pdo->query("SHOW INDEX FROM productos WHERE Key_name = 'idx_productos_activo_orden'")->fetchAll();
+    if ($indices !== []) {
+        $pdo->exec('ALTER TABLE productos DROP INDEX idx_productos_activo_orden');
+    }
+
+    $pdo->exec('ALTER TABLE productos DROP COLUMN activo, DROP COLUMN orden');
+}
 
 function db_migrar_precio_serie(): void
 {
@@ -44,32 +58,36 @@ function db_migrar_categoria(): void
     $pdo->exec("UPDATE productos SET categoria = 'zapatillas' WHERE categoria = ''");
 }
 
-function productos_listar_por_categoria(string $categoria, int $limite = HOME_PRODUCTOS_MAX): array
+function productos_listar_por_categoria(string $categoria): array
 {
     db_migrar_categoria();
+    db_migrar_quitar_activo_orden();
 
     $categoria = categoria_normalizar($categoria);
     if (!categoria_es_valida($categoria)) {
         $categoria = CATEGORIA_HOME_DEFAULT;
     }
 
-    $limite = max(1, min($limite, HOME_PRODUCTOS_MAX));
     $pdo = db();
     $stmt = $pdo->prepare(
         'SELECT * FROM productos
-         WHERE activo = 1 AND categoria = :categoria
-         ORDER BY orden ASC, id DESC
-         LIMIT ' . (int) $limite
+         WHERE categoria = :categoria
+         ORDER BY id DESC'
     );
     $stmt->execute(['categoria' => $categoria]);
 
     $productos = [];
     foreach ($stmt->fetchAll() as $fila) {
-        [$colores, $tallas, $beneficios, $variantes] = producto_cargar_relaciones((int) $fila['id']);
+        $productoId = (int) $fila['id'];
+        if (!producto_tiene_foto_catalogo($productoId)) {
+            continue;
+        }
+
+        [$colores, $tallas, $beneficios, $variantes] = producto_cargar_relaciones($productoId);
         if ($colores === []) {
             continue;
         }
-        $colores = producto_aplicar_variantes_a_colores($colores, $tallas, $variantes, (int) $fila['id']);
+        $colores = producto_aplicar_variantes_a_colores($colores, $tallas, $variantes, $productoId);
         $productos[] = producto_formatear_catalogo($fila, $colores, $tallas, $beneficios, $variantes);
     }
 
@@ -514,32 +532,31 @@ function producto_cargar_relaciones(int $productoId): array
     return [$colores, $tallas, $beneficios, producto_cargar_variantes($productoId)];
 }
 
-function productos_listar_catalogo(bool $soloActivos = true): array
+function producto_obtener_admin(int $id): ?array
 {
     $pdo = db();
-    $sql = 'SELECT * FROM productos';
-    if ($soloActivos) {
-        $sql .= ' WHERE activo = 1';
-    }
-    $sql .= ' ORDER BY orden ASC, id DESC';
+    $stmt = $pdo->prepare('SELECT * FROM productos WHERE id = :id LIMIT 1');
+    $stmt->execute(['id' => $id]);
+    $fila = $stmt->fetch();
 
-    if ($soloActivos) {
-        $sql .= ' LIMIT ' . CATALOGO_MAX_VISIBLE;
+    if (!$fila) {
+        return null;
     }
 
-    $filas = $pdo->query($sql)->fetchAll();
-    $productos = [];
+    [$colores, $tallas, $beneficios, $variantes] = producto_cargar_relaciones($id);
+    $colores = producto_aplicar_variantes_a_colores($colores, $tallas, $variantes, $id);
 
-    foreach ($filas as $fila) {
-        [$colores, $tallas, $beneficios, $variantes] = producto_cargar_relaciones((int) $fila['id']);
-        if ($colores === []) {
-            continue;
-        }
-        $colores = producto_aplicar_variantes_a_colores($colores, $tallas, $variantes, (int) $fila['id']);
-        $productos[] = producto_formatear_catalogo($fila, $colores, $tallas, $beneficios, $variantes);
-    }
+    return producto_formatear_catalogo($fila, $colores, $tallas, $beneficios, $variantes);
+}
 
-    return $productos;
+function productos_listar_admin(): array
+{
+    db_migrar_quitar_activo_orden();
+    $pdo = db();
+
+    return $pdo->query(
+        'SELECT id, marca, nombre, precio, actualizado_en FROM productos ORDER BY id DESC'
+    )->fetchAll();
 }
 
 function producto_obtener(int $id): ?array
@@ -557,34 +574,6 @@ function producto_obtener(int $id): ?array
     $colores = producto_aplicar_variantes_a_colores($colores, $tallas, $variantes, $id);
 
     return producto_formatear_catalogo($fila, $colores, $tallas, $beneficios, $variantes);
-}
-
-function producto_obtener_admin(int $id): ?array
-{
-    $pdo = db();
-    $stmt = $pdo->prepare('SELECT * FROM productos WHERE id = :id LIMIT 1');
-    $stmt->execute(['id' => $id]);
-    $fila = $stmt->fetch();
-
-    if (!$fila) {
-        return null;
-    }
-
-    [$colores, $tallas, $beneficios, $variantes] = producto_cargar_relaciones($id);
-    $colores = producto_aplicar_variantes_a_colores($colores, $tallas, $variantes, $id);
-    $producto = producto_formatear_catalogo($fila, $colores, $tallas, $beneficios, $variantes);
-    $producto['activo'] = (bool) $fila['activo'];
-    $producto['orden'] = (int) $fila['orden'];
-
-    return $producto;
-}
-
-function productos_listar_admin(): array
-{
-    $pdo = db();
-    $filas = $pdo->query('SELECT id, marca, nombre, precio, activo, orden, actualizado_en FROM productos ORDER BY orden ASC, id ASC')->fetchAll();
-
-    return $filas;
 }
 
 function producto_tiene_foto_catalogo(int $productoId): bool
@@ -621,6 +610,7 @@ function productos_listar_sin_foto(): array
 
 function producto_guardar(?int $id, array $datos): int
 {
+    db_migrar_quitar_activo_orden();
     $pdo = db();
     $pdo->beginTransaction();
     $productoId = 0;
@@ -639,9 +629,9 @@ function producto_guardar(?int $id, array $datos): int
         if ($id === null) {
             $stmt = $pdo->prepare(
                 'INSERT INTO productos (marca, nombre, descripcion, bullets, tags, categoria, precio, precio_anterior,
-                 aplicar_descuento, serie, color_default, activo, orden)
+                 aplicar_descuento, serie, color_default)
                  VALUES (:marca, :nombre, :descripcion, :bullets, :tags, :categoria, :precio, :precio_anterior,
-                 :aplicar_descuento, :serie, :color_default, :activo, :orden)'
+                 :aplicar_descuento, :serie, :color_default)'
             );
             $stmt->execute([
                 'marca' => $datos['marca'],
@@ -655,16 +645,14 @@ function producto_guardar(?int $id, array $datos): int
                 'aplicar_descuento' => !empty($datos['aplicar_descuento']) ? 1 : 0,
                 'serie' => series_normalizar((string) ($datos['serie'] ?? 'escolar')),
                 'color_default' => $datos['color_default'],
-                'activo' => $datos['activo'] ? 1 : 0,
-                'orden' => $datos['orden'],
             ]);
             $productoId = (int) $pdo->lastInsertId();
         } else {
             $stmt = $pdo->prepare(
                 'UPDATE productos SET marca = :marca, nombre = :nombre, descripcion = :descripcion,
                  bullets = :bullets, tags = :tags, categoria = :categoria, precio = :precio, precio_anterior = :precio_anterior,
-                 aplicar_descuento = :aplicar_descuento, serie = :serie, color_default = :color_default,
-                 activo = :activo, orden = :orden WHERE id = :id'
+                 aplicar_descuento = :aplicar_descuento, serie = :serie, color_default = :color_default
+                 WHERE id = :id'
             );
             $stmt->execute([
                 'id' => $id,
@@ -679,8 +667,6 @@ function producto_guardar(?int $id, array $datos): int
                 'aplicar_descuento' => !empty($datos['aplicar_descuento']) ? 1 : 0,
                 'serie' => series_normalizar((string) ($datos['serie'] ?? 'escolar')),
                 'color_default' => $datos['color_default'],
-                'activo' => $datos['activo'] ? 1 : 0,
-                'orden' => $datos['orden'],
             ]);
             $productoId = $id;
             $stockPreservado = inventario_preservar_stock_por_sku($productoId);
@@ -791,8 +777,6 @@ function producto_importar_desde_array(array $producto, int $orden): int
         'aplicar_descuento' => producto_leer_aplicar_descuento($producto),
         'serie' => series_normalizar((string) ($producto['serie'] ?? 'escolar')),
         'color_default' => $producto['color_default'] ?? '',
-        'activo' => true,
-        'orden' => $orden,
         'colores' => $producto['colores'] ?? [],
         'tallas' => $producto['tallas'] ?? [],
         'beneficios' => $producto['beneficios'] ?? [],
@@ -863,10 +847,9 @@ function producto_variante_marcar_vendida(int $productoId, string $colorCodigo, 
     db_migrar_variantes();
     $pdo = db();
 
-    $stmt = $pdo->prepare('SELECT id, activo FROM productos WHERE id = :id LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id FROM productos WHERE id = :id LIMIT 1');
     $stmt->execute(['id' => $productoId]);
-    $producto = $stmt->fetch();
-    if (!$producto || !(int) $producto['activo']) {
+    if (!$stmt->fetch()) {
         return ['ok' => false, 'error' => 'Producto no disponible'];
     }
 
@@ -940,29 +923,4 @@ function productos_contar(): int
 {
     $pdo = db();
     return (int) $pdo->query('SELECT COUNT(*) FROM productos')->fetchColumn();
-}
-
-function productos_aplicar_reglas_catalogo(): void
-{
-    $pdo = db();
-    $stmt = $pdo->query('SELECT id FROM productos ORDER BY id DESC');
-    $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-    $updateActivo = $pdo->prepare(
-        'UPDATE productos SET activo = 1, orden = :orden WHERE id = :id'
-    );
-    $updateInactivo = $pdo->prepare(
-        'UPDATE productos SET activo = 0 WHERE id = :id'
-    );
-
-    foreach ($ids as $posicion => $productoId) {
-        if ($posicion < CATALOGO_MAX_VISIBLE) {
-            $updateActivo->execute([
-                'orden' => $posicion,
-                'id' => (int) $productoId,
-            ]);
-        } else {
-            $updateInactivo->execute(['id' => (int) $productoId]);
-        }
-    }
 }

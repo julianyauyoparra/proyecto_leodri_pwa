@@ -98,13 +98,21 @@ $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha']
                     ENT_QUOTES,
                     'UTF-8'
                 );
+                $etiquetaColor = trim((string) ($color['etiqueta'] ?? ''));
+                if ($etiquetaColor === '') {
+                    $etiquetaColor = trim((string) ($color['codigo'] ?? ''));
+                }
+                if ($etiquetaColor === '') {
+                    $etiquetaColor = 'Color ' . ((int) $idxColor + 1);
+                }
                 ?>
                 <button
                     type="button"
                     class="ficha-thumb"
                     role="option"
                     aria-selected="false"
-                    aria-label="Color <?= (int) $idxColor + 1 ?>"
+                    aria-label="Color <?= h($etiquetaColor) ?>"
+                    title="<?= h($etiquetaColor) ?>"
                     data-color="<?= h($color['codigo'] ?? '') ?>"
                     data-sku-base="<?= h($color['sku_base'] ?? '') ?>"
                     data-sku-sin-talla="<?= h($color['sku_sin_talla'] ?? '') ?>"
@@ -114,6 +122,7 @@ $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha']
                     data-alt="<?= h($color['alt'] ?: $heroAlt) ?>"
                 >
                     <img src="<?= h($thumbUrl) ?>" alt="" width="72" height="72">
+                    <span class="ficha-thumb__tooltip"><?= h($etiquetaColor) ?></span>
                 </button>
             <?php endforeach; ?>
         </div>

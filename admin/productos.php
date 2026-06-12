@@ -31,7 +31,7 @@ admin_layout_inicio('Productos', true, 'admin-body--productos');
 <div class="admin-card admin-productos-intro">
     <h2 class="admin-productos-intro__titulo">Productos cargados (<?= count($productos) ?>)</h2>
     <p class="admin-hint admin-productos-intro__texto">
-        El catálogo público muestra solo los <strong>3 productos más recientes</strong> con foto.
+        En la tienda se muestran todos los productos con foto. Los que falten completar aparecen en «Completar fotos».
     </p>
 </div>
 
@@ -50,17 +50,14 @@ admin_layout_inicio('Productos', true, 'admin-body--productos');
             ?>
             <article class="admin-producto-item">
                 <div class="admin-producto-item__info">
-                    <p class="admin-producto-item__meta">ID <?= h((string) $id) ?> · Orden <?= h((string) $p['orden']) ?></p>
+                    <p class="admin-producto-item__meta">ID <?= h((string) $id) ?></p>
                     <h3 class="admin-producto-item__nombre"><?= h($nombreCompleto) ?></h3>
                     <p class="admin-producto-item__precio"><?= h(formatear_precio((float) $p['precio'])) ?></p>
                     <div class="admin-producto-item__badges">
-                        <?php if ($p['activo']): ?>
-                            <span class="admin-badge admin-badge--activo">Activo</span>
-                        <?php else: ?>
-                            <span class="admin-badge admin-badge--inactivo">Oculto</span>
-                        <?php endif; ?>
                         <?php if (!$tieneFoto): ?>
                             <span class="admin-badge admin-badge--foto">Sin foto</span>
+                        <?php else: ?>
+                            <span class="admin-badge admin-badge--activo">En tienda</span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -73,9 +70,9 @@ admin_layout_inicio('Productos', true, 'admin-body--productos');
                         <a href="fotos_pendientes.php" class="admin-btn admin-btn--secundario admin-btn--chico admin-btn--bloque">
                             Subir foto
                         </a>
-                    <?php elseif ($p['activo']): ?>
-                        <a href="../catalogo.php" class="admin-btn admin-btn--secundario admin-btn--chico admin-btn--bloque" target="_blank" rel="noopener">
-                            Ver en catálogo
+                    <?php elseif ($tieneFoto): ?>
+                        <a href="../home.php#tienda-productos" class="admin-btn admin-btn--secundario admin-btn--chico admin-btn--bloque" target="_blank" rel="noopener">
+                            Ver en tienda
                         </a>
                     <?php endif; ?>
                     <form

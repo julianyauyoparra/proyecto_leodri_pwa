@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $mantenerTodas = !empty($_POST['mantener_todas']);
             $alt = trim((string) ($_POST['alt'] ?? ''));
-            $urlDestino = trim((string) ($_POST['url_destino'] ?? 'catalogo.php'));
+            $urlDestino = trim((string) ($_POST['url_destino'] ?? 'home.php#tienda-productos'));
             $resultado = banners_subir($_FILES['banner'], $mantenerTodas, $alt, $urlDestino);
 
             if ($resultado['accion'] === 'reemplazado') {
@@ -76,7 +76,7 @@ admin_layout_inicio('Agregar banner');
 
         <label class="admin-banner-form__campo">
             <span>Enlace al hacer clic (opcional)</span>
-            <input type="text" name="url_destino" maxlength="500" value="catalogo.php" placeholder="catalogo.php">
+            <input type="text" name="url_destino" maxlength="500" value="home.php#tienda-productos" placeholder="home.php#tienda-productos">
         </label>
 
         <label class="admin-banner-form__check">

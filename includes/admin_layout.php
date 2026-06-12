@@ -27,6 +27,8 @@ function admin_layout_inicio(string $titulo, bool $mostrarNav = true, string $cl
 
     <title><?= h($titulo) ?> — LEODRI Admin</title>
 
+    <link rel="icon" href="../assets/icons/favicon-32.png" type="image/png" sizes="32x32">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,7 +51,7 @@ function admin_layout_inicio(string $titulo, bool $mostrarNav = true, string $cl
 
                 <img
 
-                    src="../assets/logo-leodri-oficial.png"
+                    src="../assets/logo-leodri-oficial.webp"
 
                     alt="LEODRI — Calzados que dirigen tu camino"
 
@@ -57,7 +59,7 @@ function admin_layout_inicio(string $titulo, bool $mostrarNav = true, string $cl
 
                     width="280"
 
-                    height="72"
+                    height="55"
 
                 >
 

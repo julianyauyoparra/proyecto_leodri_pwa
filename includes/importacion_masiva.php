@@ -231,8 +231,6 @@ function importacion_fila_a_producto(array $fila): array
             'aplicar_descuento' => true,
             'serie' => 'escolar',
             'color_default' => 'C1',
-            'activo' => false,
-            'orden' => 0,
             'colores' => [
                 [
                     'codigo' => 'C1',
@@ -332,10 +330,6 @@ function importacion_ejecutar(array $filas): array
         }
     }
 
-    if ($creados > 0) {
-        productos_aplicar_reglas_catalogo();
-    }
-
     return [
         'creados' => $creados,
         'ids' => $ids,
@@ -379,6 +373,4 @@ function producto_subir_foto_principal(int $productoId, array $archivo): void
         'imagenes' => $json,
         'id' => (int) $color['id'],
     ]);
-
-    productos_aplicar_reglas_catalogo();
 }

@@ -9,7 +9,7 @@ $tiendaBase = $tiendaBase ?? '';
 require_once __DIR__ . '/repositorio_banners.php';
 
 $heroBanners = banners_listar_para_tienda();
-$heroDestinoDefault = $tiendaBase . 'catalogo.php';
+$heroDestinoDefault = $tiendaBase . 'home.php#tienda-productos';
 
 if ($heroBanners === []) {
     return;
@@ -24,7 +24,7 @@ if ($heroBanners === []) {
         <div class="tienda-hero__track">
             <?php foreach ($heroBanners as $indice => $banner): ?>
                 <?php
-                $destinoRel = ltrim((string) ($banner['url_destino'] ?? 'catalogo.php'), '/');
+                $destinoRel = ltrim((string) ($banner['url_destino'] ?? 'home.php#tienda-productos'), '/');
                 $destino = $destinoRel === '' ? $heroDestinoDefault : $tiendaBase . $destinoRel;
                 $ancho = max(1, (int) ($banner['ancho'] ?? 0));
                 $alto = max(1, (int) ($banner['alto'] ?? 0));

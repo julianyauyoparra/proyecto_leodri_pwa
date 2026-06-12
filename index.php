@@ -21,7 +21,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>LEODRI — En construcción</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="icon" href="assets/icons/icon-192.png" type="image/png">
+    <link rel="icon" href="assets/icons/favicon-32.png" type="image/png" sizes="32x32">
     <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,11 +33,11 @@
     <header class="construccion-header">
         <a href="./" class="construccion-header__logo" aria-label="LEODRI — Inicio">
             <img
-                src="assets/logo-leodri-oficial.png"
+                src="assets/logo-leodri-oficial.webp"
                 alt="LEODRI — Calzado que marca tu camino"
                 class="construccion-header__logo-img"
                 width="845"
-                height="130"
+                height="167"
             >
         </a>
     </header>

@@ -17,11 +17,6 @@ $id = isset($_POST['id']) && $_POST['id'] !== '' ? (int) $_POST['id'] : null;
 $esNuevo = $id === null;
 $datos = admin_parsear_producto_post($_POST);
 
-if ($esNuevo) {
-    $datos['activo'] = true;
-    $datos['orden'] = 0;
-}
-
 try {
     db_migrar_imagenes();
     db_migrar_variantes();
@@ -44,7 +39,6 @@ try {
     }
 
     producto_guardar($id, $datos);
-    productos_aplicar_reglas_catalogo();
 
     header('Location: productos.php?guardado=1');
     exit;
