@@ -126,7 +126,7 @@
 
     <script src="js/ficha.js" defer></script>
 
-    <p>Cambio de dominio</p>
+    <p>Cambio de dominio por segunda vez</p>
 
 </body>
 
