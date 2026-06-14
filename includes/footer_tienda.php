@@ -30,11 +30,11 @@ $anioActual = (int) date('Y');
     <div class="tienda-footer__inner">
         <a href="<?= h($tiendaBase === '' ? './' : $tiendaBase) ?>" class="tienda-footer__marca" aria-label="LEODRI — Inicio">
             <img
-                src="<?= h($tiendaBase) ?>assets/logo-leodri-blanco.webp"
+                src="<?= h($tiendaBase) ?>assets/logo-leodri-blanco.png"
                 alt="LEODRI — Calzado que marca tu camino"
                 class="tienda-footer__logo"
-                width="721"
-                height="112"
+                width="1024"
+                height="215"
                 loading="lazy"
                 decoding="async"
             >

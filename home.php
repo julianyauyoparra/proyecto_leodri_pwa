@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#d80000">
     <meta name="robots" content="noindex, nofollow">
-    <title>LEODRI — Vista previa tienda</title>
+    <title>LEODRI — Moda OnLine</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="assets/icons/favicon-32.png" type="image/png" sizes="32x32">
     <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
