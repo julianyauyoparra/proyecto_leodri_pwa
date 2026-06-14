@@ -75,6 +75,23 @@ function imagen_thumbnail(array $color): string
     return $color['imagen'];
 }
 
+function color_por_defecto(array $producto): ?array
+{
+    $colores = $producto['colores'] ?? [];
+    if ($colores === []) {
+        return null;
+    }
+
+    $codigo = $producto['color_default'] ?? '';
+    foreach ($colores as $color) {
+        if (($color['codigo'] ?? '') === $codigo) {
+            return $color;
+        }
+    }
+
+    return $colores[0];
+}
+
 function db_migrar_imagenes(): void
 {
     $pdo = db();

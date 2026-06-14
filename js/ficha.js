@@ -245,12 +245,9 @@
 
     function initDetallesModal() {
         const panel = document.getElementById('ficha-detalles');
-        const guiasRoot = document.getElementById('ficha-guias-serie');
-        if (!panel || !guiasRoot) return null;
+        if (!panel) return null;
 
         const contenido = panel.querySelector('[data-detalles-contenido]');
-        const guiaDestino = panel.querySelector('[data-detalles-guia]');
-        const guiaTitulo = panel.querySelector('[data-detalles-guia-titulo]');
         const btnCerrar = panel.querySelector('.ficha-detalles__cerrar');
         const backdrop = panel.querySelector('[data-detalles-cerrar]');
         let ultimoFoco = null;
@@ -265,7 +262,6 @@
             document.body.classList.remove('ficha-detalles-abierta');
             if (stickyBarsCtrl) stickyBarsCtrl.actualizar();
             if (contenido) contenido.innerHTML = '';
-            if (guiaDestino) guiaDestino.innerHTML = '';
             if (ultimoFoco && typeof ultimoFoco.focus === 'function') {
                 ultimoFoco.focus();
             }
@@ -273,22 +269,12 @@
         }
 
         function abrir(ficha) {
-            if (!contenido || !guiaDestino) return;
+            if (!contenido) return;
 
             const tpl = ficha ? ficha.querySelector('.ficha-detalles-tpl') : null;
             contenido.innerHTML = '';
             if (tpl && tpl.content) {
                 contenido.appendChild(tpl.content.cloneNode(true));
-            }
-
-            const serie = ficha ? (ficha.dataset.serie || 'escolar') : 'escolar';
-            const guiaTpl = guiasRoot.querySelector('.ficha-guia-serie[data-serie="' + serie + '"]');
-            guiaDestino.innerHTML = '';
-            if (guiaTpl) {
-                if (guiaTitulo) {
-                    guiaTitulo.textContent = guiaTpl.getAttribute('data-titulo') || 'Guía de tallas';
-                }
-                guiaDestino.appendChild(guiaTpl.cloneNode(true));
             }
 
             ultimoFoco = document.activeElement;
@@ -305,8 +291,69 @@
         return { abrir, cerrar, estaAbierto };
     }
 
+    function initGuiaModal() {
+        const panel = document.getElementById('ficha-guia');
+        if (!panel) return null;
+
+        const contenido = panel.querySelector('[data-guia-contenido]');
+        const titulo = panel.querySelector('#ficha-guia-titulo');
+        const btnCerrar = panel.querySelector('.ficha-guia__cerrar');
+        const backdrop = panel.querySelector('[data-guia-cerrar]');
+        let ultimoFoco = null;
+
+        function estaAbierto() {
+            return panel.classList.contains('is-abierto');
+        }
+
+        function cerrar() {
+            panel.classList.remove('is-abierto');
+            panel.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('ficha-guia-abierta');
+            if (stickyBarsCtrl) stickyBarsCtrl.actualizar();
+            if (contenido) contenido.innerHTML = '';
+            if (ultimoFoco && typeof ultimoFoco.focus === 'function') {
+                ultimoFoco.focus();
+            }
+            ultimoFoco = null;
+        }
+
+        function abrir(ficha) {
+            if (!contenido || !ficha) return;
+
+            const pdf = ficha.dataset.guiaPdf || '';
+            const html = ficha.dataset.guiaHtml || '';
+            const tituloTexto = ficha.dataset.guiaTitulo || 'Guía de tallas';
+
+            contenido.innerHTML = '';
+            if (pdf) {
+                contenido.innerHTML = '<iframe class="ficha-guia__pdf" src="' + pdf + '#toolbar=0&navpanes=0" title="Guía de tallas"></iframe>';
+            } else if (html) {
+                contenido.innerHTML = html;
+            } else {
+                return;
+            }
+
+            if (titulo) {
+                titulo.textContent = tituloTexto;
+            }
+
+            ultimoFoco = document.activeElement;
+            panel.classList.add('is-abierto');
+            panel.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('ficha-guia-abierta');
+            if (stickyBarsCtrl) stickyBarsCtrl.actualizar();
+            if (btnCerrar) btnCerrar.focus();
+        }
+
+        if (btnCerrar) btnCerrar.addEventListener('click', cerrar);
+        if (backdrop) backdrop.addEventListener('click', cerrar);
+
+        return { abrir, cerrar, estaAbierto };
+    }
+
     function modalAbierto() {
         return document.body.classList.contains('ficha-detalles-abierta')
+            || document.body.classList.contains('ficha-guia-abierta')
             || document.body.classList.contains('ficha-lightbox-abierto');
     }
 
@@ -376,12 +423,14 @@
         return { actualizar: actualizarVisibilidad };
     }
 
-    function initFicha(ficha, lightbox, detallesModal) {
+    function initFicha(ficha, lightbox, detallesModal, guiaModal) {
+        const esHome = ficha.classList.contains('ficha--home');
         const hero = ficha.querySelector('.ficha-galeria__hero');
         const heroImg = ficha.querySelector('.ficha-galeria__hero-img');
         const heroMenu = ficha.querySelector('.ficha-hero-menu');
         const btnZoom = ficha.querySelector('[data-hero-zoom]');
         const btnDetalles = ficha.querySelector('[data-hero-detalles]');
+        const btnsGuia = ficha.querySelectorAll('[data-guia]');
         const thumbs = ficha.querySelectorAll('.ficha-thumb');
         const totalColores = Array.prototype.filter.call(thumbs, function (thumb) {
             return Boolean(thumb.dataset.imagen);
@@ -499,11 +548,16 @@
 
         function iniciarCarrusel() {
             detenerCarrusel();
-            if (!colorSeleccionado || carruselUrls.length <= 1) return;
+            if (esHome || !colorSeleccionado || carruselUrls.length <= 1) return;
             carruselTimer = setInterval(avanzarCarrusel, CARRUSEL_INTERVALO_MS);
         }
 
         function prepararCarrusel(imagenes) {
+            detenerCarrusel();
+            if (esHome) {
+                carruselUrls = [];
+                return;
+            }
             carruselUrls = [];
             VISTAS_CARRUSEL.forEach(function (clave) {
                 if (imagenes[clave]) {
@@ -697,49 +751,40 @@
             });
         }
 
-        if (hero && heroMenu) {
-            function dispositivoConHover() {
-                return SOPORTA_HOVER.matches;
-            }
+        if (guiaModal) {
+            btnsGuia.forEach(function (btnGuia) {
+                btnGuia.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    ocultarMenuHero();
+                    guiaModal.abrir(ficha);
+                });
+            });
+        }
 
-            if (dispositivoConHover()) {
-                hero.addEventListener('mouseenter', function () {
+        if (hero && heroMenu) {
+            hero.addEventListener('click', function (e) {
+                if (e.target.closest('.ficha-hero-menu__opcion')) {
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                if (menuHeroVisible) {
+                    ocultarMenuHero();
+                } else {
                     carruselPausado = true;
                     mostrarMenuHero();
-                });
-                hero.addEventListener('mouseleave', function () {
-                    carruselPausado = false;
-                    ocultarMenuHero();
-                });
-            } else {
-                hero.addEventListener('click', function (e) {
-                    if (e.target.closest('.ficha-hero-menu__opcion')) {
-                        return;
-                    }
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (menuHeroVisible) {
-                        ocultarMenuHero();
-                    } else {
-                        carruselPausado = true;
-                        mostrarMenuHero();
-                    }
-                });
+                }
+            });
 
-                document.addEventListener('click', function (e) {
-                    if (dispositivoConHover()) {
-                        return;
-                    }
-                    if (!menuHeroVisible) {
-                        return;
-                    }
-                    if (hero.contains(e.target)) {
-                        return;
-                    }
-                    carruselPausado = false;
-                    ocultarMenuHero();
-                });
-            }
+            document.addEventListener('click', function (e) {
+                if (!menuHeroVisible) {
+                    return;
+                }
+                if (hero.contains(e.target)) {
+                    return;
+                }
+                ocultarMenuHero();
+            });
         }
 
         if (ctaSticky && cta) {
@@ -857,6 +902,7 @@
     stickyBarsCtrl = initStickyBars();
     const lightbox = initLightbox();
     const detallesModal = initDetallesModal();
+    const guiaModal = initGuiaModal();
 
     document.addEventListener('keydown', function (e) {
         if (lightbox && lightbox.estaAbierto()) {
@@ -877,12 +923,16 @@
         }
 
         if (e.key !== 'Escape') return;
+        if (guiaModal && guiaModal.estaAbierto()) {
+            guiaModal.cerrar();
+            return;
+        }
         if (detallesModal && detallesModal.estaAbierto()) {
             detallesModal.cerrar();
         }
     });
 
     document.querySelectorAll('.ficha').forEach(function (ficha) {
-        initFicha(ficha, lightbox, detallesModal);
+        initFicha(ficha, lightbox, detallesModal, guiaModal);
     });
 })();

@@ -6,8 +6,6 @@ CREATE TABLE IF NOT EXISTS productos (
     marca VARCHAR(100) NOT NULL,
     nombre VARCHAR(200) NOT NULL,
     descripcion TEXT NOT NULL,
-    bullets JSON NOT NULL,
-    tags JSON NOT NULL,
     precio DECIMAL(10, 2) NOT NULL DEFAULT 0,
     color_default VARCHAR(20) NOT NULL DEFAULT '',
     creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -41,19 +39,6 @@ CREATE TABLE IF NOT EXISTS producto_tallas (
         FOREIGN KEY (producto_id) REFERENCES productos (id)
         ON DELETE CASCADE,
     INDEX idx_tallas_producto (producto_id, orden)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS producto_beneficios (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    producto_id INT UNSIGNED NOT NULL,
-    icono VARCHAR(20) NOT NULL DEFAULT 'check',
-    titulo VARCHAR(200) NOT NULL,
-    texto TEXT NOT NULL,
-    orden INT NOT NULL DEFAULT 0,
-    CONSTRAINT fk_beneficios_producto
-        FOREIGN KEY (producto_id) REFERENCES productos (id)
-        ON DELETE CASCADE,
-    INDEX idx_beneficios_producto (producto_id, orden)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS admin_usuarios (

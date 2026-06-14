@@ -217,110 +217,120 @@ function admin_generar_sku(string $codigoInventario, int $indiceColor, ?string $
 function admin_parsear_producto_post(array $post): array
 {
     require_once __DIR__ . '/categorias_tienda.php';
+    require_once __DIR__ . '/repositorio_series.php';
 
-    $bullets = array_values(array_filter(array_map('trim', explode("\n", $post['bullets'] ?? ''))));
-    $tags = array_values(array_filter(array_map('trim', explode(',', $post['tags'] ?? ''))));
+    $numerosStock = $post['stock_numero'] ?? [];
+    $paresStock = $post['stock_pares'] ?? [];
+    $disponibleStock = $post['stock_disponible'] ?? [];
 
+    $tallas = [];
+    $stockMapa = [];
+    $variantesPrincipal = [];
     $numerosTalla = [];
-    foreach ($post['tallas']['numero'] ?? [] as $numero) {
+
+    foreach ($numerosStock as $i => $numero) {
         $numero = trim((string) $numero);
-        if ($numero !== '') {
-            $numerosTalla[] = $numero;
+        if ($numero === '') {
+            continue;
         }
+        $pares = max(0, (int) ($paresStock[$i] ?? 0));
+        $disponible = ($disponibleStock[$i] ?? '1') === '1';
+
+        $numerosTalla[] = $numero;
+        $stockMapa[$numero] = $pares;
+        $variantesPrincipal[$numero] = $disponible;
+        $tallas[] = [
+            'numero' => $numero,
+            'disponible' => $disponible,
+        ];
     }
+
     $primeraTalla = $numerosTalla[0] ?? null;
 
     $colores = [];
     $totalColores = max(
-        count($post['colores']['codigo_inventario'] ?? []),
+        count($post['colores']['codigo'] ?? []),
+        count($post['colores']['etiqueta'] ?? []),
         count($post['colores']['imagen_actual'] ?? [])
     );
 
     for ($i = 0; $i < $totalColores; $i++) {
-        $codigoInv = trim((string) ($post['colores']['codigo_inventario'][$i] ?? ''));
+        $codigo = trim((string) ($post['colores']['codigo'][$i] ?? 'C' . ($i + 1)));
+        if ($codigo === '') {
+            $codigo = 'C' . ($i + 1);
+        }
+        $etiqueta = trim((string) ($post['colores']['etiqueta'][$i] ?? 'Color ' . ($i + 1)));
+        if ($etiqueta === '') {
+            $etiqueta = 'Color ' . ($i + 1);
+        }
+
         $imagenes = [];
         foreach (imagenes_vistas() as $vista) {
             $imagenes[$vista] = trim((string) ($post['colores']['imagen_actual'][$i][$vista] ?? ''));
         }
 
-        $sku = admin_generar_sku($codigoInv, $i, $primeraTalla);
-        $variantes = [];
-        foreach ($numerosTalla as $numero) {
-            $valor = (string) ($post['colores']['variantes'][$i][$numero] ?? '1');
-            $variantes[$numero] = $valor === '1';
+        $sku = admin_generar_sku('', $i, $primeraTalla);
+        $variantes = $i === 0 ? $variantesPrincipal : [];
+        if ($variantes === []) {
+            foreach ($numerosTalla as $numero) {
+                $variantes[$numero] = true;
+            }
         }
 
         $colores[] = [
-            'codigo' => 'C' . ($i + 1),
-            'etiqueta' => 'Color ' . ($i + 1),
+            'codigo' => $codigo,
+            'etiqueta' => $etiqueta,
             'imagen' => $imagenes['derecha'] ?? $imagenes['frente'] ?? '',
             'imagenes' => $imagenes,
             'alt' => '',
             'sku_base' => $sku['sku_base'],
             'sku_sin_talla' => $sku['sku_sin_talla'],
-            'codigo_inventario' => $codigoInv,
+            'codigo_inventario' => '',
             'variantes' => $variantes,
         ];
     }
 
-    $tallas = [];
-    foreach ($post['tallas']['numero'] ?? [] as $i => $numero) {
-        $numero = trim((string) $numero);
-        if ($numero === '') {
-            continue;
-        }
-        $tallas[] = [
-            'numero' => $numero,
-            'disponible' => ($post['tallas']['disponible'][$i] ?? '1') === '1',
-        ];
-    }
-
-    $iconos = ['check', 'zap', 'shoe', 'wave', 'shield'];
-    $beneficios = [];
-    foreach ($post['beneficios']['titulo'] ?? [] as $i => $titulo) {
-        $titulo = trim((string) $titulo);
-        if ($titulo === '') {
-            continue;
-        }
-        $beneficios[] = [
-            'icono' => $iconos[$i % count($iconos)],
-            'titulo' => $titulo,
-            'texto' => trim((string) ($post['beneficios']['texto'][$i] ?? '')),
-        ];
-    }
-
     $colorDefault = $colores[0]['codigo'] ?? '';
+    $modelo = trim((string) ($post['modelo'] ?? $post['nombre'] ?? ''));
+    $serieSlug = series_resolver_slug_producto((string) ($post['serie'] ?? 'SERIE_JUVENIL'));
 
     return [
         'marca' => trim((string) ($post['marca'] ?? '')),
-        'nombre' => trim((string) ($post['nombre'] ?? '')),
+        'nombre' => $modelo,
+        'modelo' => $modelo,
+        'tipo' => trim((string) ($post['tipo'] ?? '')),
+        'publico' => trim((string) ($post['publico'] ?? 'unisex')),
         'descripcion' => trim((string) ($post['descripcion'] ?? '')),
-        'bullets' => $bullets,
-        'tags' => $tags,
         'categoria' => categoria_desde_request((string) ($post['categoria'] ?? CATEGORIA_HOME_DEFAULT)),
         'precio' => (float) str_replace(',', '.', (string) ($post['precio'] ?? '0')),
         'precio_anterior' => (float) str_replace(',', '.', (string) ($post['precio_anterior'] ?? '0')),
         'aplicar_descuento' => !empty($post['aplicar_descuento']),
-        'serie' => series_normalizar((string) ($post['serie'] ?? 'escolar')),
+        'serie' => $serieSlug,
+        'serie_anterior' => trim((string) ($post['serie_anterior'] ?? '')),
         'color_default' => $colorDefault,
         'colores' => $colores,
         'tallas' => $tallas,
-        'beneficios' => $beneficios,
+        'stock_mapa' => $stockMapa,
     ];
 }
 
 function admin_validar_producto(array $datos): array
 {
+    require_once __DIR__ . '/repositorio_series.php';
+
     $errores = [];
 
     if ($datos['marca'] === '') {
         $errores[] = 'La marca es obligatoria.';
     }
-    if ($datos['nombre'] === '') {
-        $errores[] = 'El nombre del zapato es obligatorio.';
+    if (trim((string) ($datos['modelo'] ?? $datos['nombre'] ?? '')) === '') {
+        $errores[] = 'El modelo es obligatorio.';
     }
     if ($datos['precio'] <= 0) {
         $errores[] = 'Indica un precio válido.';
+    }
+    if (!publico_es_valido((string) ($datos['publico'] ?? ''))) {
+        $errores[] = 'Selecciona un público objetivo válido.';
     }
     if (!empty($datos['aplicar_descuento'])) {
         $anterior = (float) ($datos['precio_anterior'] ?? 0);
@@ -328,20 +338,25 @@ function admin_validar_producto(array $datos): array
             $errores[] = 'El precio anterior debe ser mayor al precio de venta cuando aplicas descuento.';
         }
     }
-    if (!series_es_valida((string) ($datos['serie'] ?? ''))) {
+    if (!series_es_slug_valido((string) ($datos['serie'] ?? ''))) {
         $errores[] = 'Selecciona una serie de tallas válida.';
     }
     if ($datos['colores'] === []) {
         $errores[] = 'Agrega al menos un color con fotos.';
     }
     if ($datos['tallas'] === []) {
-        $errores[] = 'Agrega al menos una talla.';
+        $errores[] = 'Agrega al menos una talla con stock.';
     }
 
     foreach ($datos['colores'] as $i => $color) {
         $derecha = $color['imagenes']['derecha'] ?? '';
         if ($derecha === '') {
-            $errores[] = 'El color ' . ($i + 1) . ' necesita la foto Derecha (miniatura del catálogo).';
+            $errores[] = 'Se necesita la foto Derecha (miniatura del catálogo).';
+            break;
+        }
+        if (trim((string) ($color['etiqueta'] ?? '')) === '') {
+            $errores[] = 'Indica el nombre del color.';
+            break;
         }
     }
 

@@ -13,8 +13,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !admin_verificar_csrf($_POST['csrf'
 
 $id = (int) ($_POST['id'] ?? 0);
 if ($id > 0) {
-    producto_eliminar($id);
+    try {
+        producto_eliminar($id);
+        header('Location: productos.php?eliminado=1');
+        exit;
+    } catch (Throwable $e) {
+        $_SESSION['admin_errores'] = ['No se pudo eliminar el producto: ' . $e->getMessage()];
+        header('Location: producto.php?id=' . $id);
+        exit;
+    }
 }
 
-header('Location: productos.php?eliminado=1');
+header('Location: productos.php');
 exit;

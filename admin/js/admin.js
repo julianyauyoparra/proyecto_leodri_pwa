@@ -5,9 +5,7 @@
     var previewUrls = new WeakMap();
 
     var listas = {
-        color: 'colores-lista',
-        talla: 'tallas-lista',
-        beneficio: 'beneficios-lista'
+        color: 'colores-lista'
     };
 
     function indiceColorSiguiente() {

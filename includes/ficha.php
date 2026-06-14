@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/imagenes_producto.php';
 require_once __DIR__ . '/series_tallas.php';
+require_once __DIR__ . '/repositorio_productos.php';
 
 /** @var array $producto */
 $colorPreviewRaw = color_por_defecto($producto);
@@ -12,20 +13,28 @@ if ($colorPreview === null) {
 }
 
 $marca = $producto['marca'] ?? '';
-$nombre = $producto['nombre'] ?? '';
+$tituloTienda = $producto['titulo_tienda'] ?? producto_titulo_tienda($producto);
 $precio = (float) ($producto['precio'] ?? 0);
 $precioAnterior = (float) ($producto['precio_anterior'] ?? 0);
 $aplicarDescuento = !empty($producto['aplicar_descuento']);
 $descuentoPct = (int) ($producto['descuento_pct'] ?? producto_descuento_porcentaje($precio, $precioAnterior));
-$serie = series_normalizar((string) ($producto['serie'] ?? 'escolar'));
-$heroAlt = trim($marca . ' ' . $nombre);
+$serie = (string) ($producto['serie'] ?? series_normalizar('escolar'));
+$heroAlt = trim($marca . ' ' . $tituloTienda);
 $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha'] ?? '';
+$tieneGuia = !empty($producto['guia_pdf']) || !empty($producto['guia_html']);
 ?>
 <article
     class="ficha"
     data-producto-id="<?= h((string) ($producto['id'] ?? '')) ?>"
     data-color-default="<?= h($producto['color_default'] ?? '') ?>"
     data-serie="<?= h($serie) ?>"
+    <?php if (!empty($producto['guia_pdf'])): ?>
+    data-guia-titulo="<?= h($producto['guia_titulo'] ?? 'Guía de tallas') ?>"
+    data-guia-pdf="<?= h($producto['guia_pdf']) ?>"
+    <?php elseif (!empty($producto['guia_html'])): ?>
+    data-guia-titulo="<?= h($producto['guia_titulo'] ?? 'Guía de tallas') ?>"
+    data-guia-html="<?= h($producto['guia_html']) ?>"
+    <?php endif; ?>
     aria-label="Ficha de producto"
 >
     <div class="ficha__card">
@@ -61,14 +70,20 @@ $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha']
         </section>
 
         <div class="ficha-precios" aria-label="Precios">
-            <p class="ficha-precios__actual"><?= h(formatear_precio($precio)) ?></p>
-            <?php if ($aplicarDescuento && $precioAnterior > $precio): ?>
-                <p class="ficha-precios__anterior"><?= h(formatear_precio($precioAnterior)) ?></p>
-            <?php endif; ?>
+            <div class="ficha-precios__fila">
+                <div class="ficha-precios__valores">
+                    <p class="ficha-precios__actual"><?= h(formatear_precio($precio)) ?></p>
+                    <?php if ($aplicarDescuento && $precioAnterior > $precio): ?>
+                        <p class="ficha-precios__anterior"><?= h(formatear_precio($precioAnterior)) ?></p>
+                    <?php endif; ?>
+                </div>
+                <?php $ubicacion = 'movil'; require __DIR__ . '/ficha_guia_boton.php'; ?>
+            </div>
         </div>
 
         <section class="ficha-tallas" aria-label="Selección de talla">
-            <div class="ficha-tallas__grid" role="radiogroup" aria-label="Tallas disponibles">
+            <div class="ficha-tallas__barra">
+                <div class="ficha-tallas__grid" role="radiogroup" aria-label="Tallas disponibles">
                 <?php
                 $tallasDisponiblesPreview = $colorPreview['tallas_disponibles'] ?? [];
                 foreach ($producto['tallas'] as $talla):
@@ -85,6 +100,8 @@ $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha']
                         <?= $disponible ? '' : 'aria-disabled="true" tabindex="-1"' ?>
                     ><?= h($numeroTalla) ?></button>
                 <?php endforeach; ?>
+                </div>
+                <?php $ubicacion = 'desktop'; require __DIR__ . '/ficha_guia_boton.php'; ?>
             </div>
         </section>
 
@@ -130,7 +147,7 @@ $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha']
         <header class="ficha-info">
             <h2 class="ficha-info__titulo">
                 <span class="ficha-info__marca"><?= h($marca) ?></span>
-                <?= h($nombre) ?>
+                <?= h($tituloTienda) ?>
             </h2>
             <span
                 class="ficha-tag ficha-tag--sku"
@@ -160,31 +177,6 @@ $imagenPreview = $colorPreview['imagen'] ?? $colorPreview['imagenes']['derecha']
 
     <template class="ficha-detalles-tpl">
         <p class="ficha-detalles__desc"><?= h($producto['descripcion'] ?? '') ?></p>
-        <?php if (!empty($producto['bullets'])): ?>
-            <ul class="ficha-detalles__bullets">
-                <?php foreach ($producto['bullets'] as $bullet): ?>
-                    <li><?= h($bullet) ?></li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-        <?php if (!empty($producto['beneficios'])): ?>
-            <section class="ficha-detalles__beneficios">
-                <h3 class="ficha-detalles__subtitulo">Beneficios Destacados</h3>
-                <ul class="ficha-beneficios__lista">
-                    <?php foreach ($producto['beneficios'] as $beneficio): ?>
-                        <li class="ficha-beneficio">
-                            <span class="ficha-beneficio__icono" aria-hidden="true">
-                                <?= icono_beneficio($beneficio['icono'] ?? 'check') ?>
-                            </span>
-                            <div class="ficha-beneficio__texto">
-                                <h4 class="ficha-beneficio__titulo"><?= h($beneficio['titulo'] ?? '') ?></h4>
-                                <p><?= $beneficio['texto'] ?? '' ?></p>
-                            </div>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            </section>
-        <?php endif; ?>
     </template>
 
     <div class="ficha-sticky" data-ficha-sticky aria-hidden="true">

@@ -36,15 +36,14 @@ def add_instructions(wb):
         "PLANTILLA DE CARGA MASIVA — LEODRI",
         "",
         "1. codigo_referencia: identificador único por producto (ej. PROD-001). Enlaza todas las hojas.",
-        "2. Complete PRODUCTOS (1 fila por zapato), luego COLORES, TALLAS, STOCK y BENEFICIOS.",
-        "3. bullets y tags: valores separados por | (pipe). Ej: Luces LED|Suela antideslizante",
+        "2. Complete PRODUCTOS (1 fila por zapato), luego COLORES, TALLAS y STOCK.",
+        "3. descripcion: detalles del producto en un solo texto.",
         "4. img_derecha es obligatoria (miniatura del catálogo). Rutas relativas: assets/productos/...",
         "5. sku_base usa {talla} como placeholder. Ej: KDF-SPL-RJN-LED-{talla}",
         "6. STOCK alimenta inventario_variantes (Railway). stock=0 deja la talla sin disponibilidad.",
-        "7. icono beneficios: check | zap | shoe | wave | shield",
-        "8. Las filas de ejemplo (PROD-EJEMPLO-001) pueden borrarse antes de importar.",
+        "7. Las filas de ejemplo (PROD-EJEMPLO-001) pueden borrarse antes de importar.",
         "",
-        "Tablas destino: productos, producto_colores, producto_tallas, producto_beneficios, inventario_variantes",
+        "Tablas destino: productos, producto_colores, producto_tallas, inventario_variantes",
     ]
     for i, line in enumerate(lines, start=1):
         cell = ws.cell(row=i, column=1, value=line)
@@ -59,8 +58,6 @@ def sheet_productos(wb):
         ("marca*", 14, True),
         ("nombre*", 32, True),
         ("descripcion", 48, False),
-        ("bullets", 40, False),
-        ("tags", 24, False),
         ("precio*", 10, True),
         ("color_default", 14, False),
         ("activo", 8, False),
@@ -72,8 +69,6 @@ def sheet_productos(wb):
         "KidsFoot",
         "Zapatillas Niño Spider Light",
         "Haz que sus aventuras diarias sean más divertidas y cómodas con estas zapatillas de diseño heroico.",
-        "Luces LED|Suela antideslizante|Diseño Spider",
-        "Niño|Running",
         89.9,
         "RJN",
         1,
@@ -147,33 +142,6 @@ def sheet_stock(wb):
     ws.append(["PROD-EJEMPLO-001", "GRY", "22", 2, "KDF-SPL-GRY-LED-22"])
 
 
-def sheet_beneficios(wb):
-    ws = wb.create_sheet("BENEFICIOS")
-    headers = [
-        ("codigo_referencia*", 18, True),
-        ("icono", 10, False),
-        ("titulo*", 32, True),
-        ("texto", 56, False),
-        ("orden", 8, False),
-    ]
-    style_header(ws, headers)
-    ws.append([
-        "PROD-EJEMPLO-001", "zap", "Luces LED de Larga Duración",
-        "<strong>Diversión asegurada:</strong> Suelas con luces intermitentes al caminar.", 0,
-    ])
-    ws.append([
-        "PROD-EJEMPLO-001", "check", "Cierre Autónomo (Velcro + Elástico)",
-        "<strong>Fácil de poner:</strong> El niño se las pone solo en segundos.", 1,
-    ])
-    dv = DataValidation(
-        type="list",
-        formula1='"check,zap,shoe,wave,shield"',
-        allow_blank=True,
-    )
-    ws.add_data_validation(dv)
-    dv.add("B2:B5000")
-
-
 def main():
     wb = Workbook()
     wb.remove(wb.active)
@@ -182,7 +150,6 @@ def main():
     sheet_colores(wb)
     sheet_tallas(wb)
     sheet_stock(wb)
-    sheet_beneficios(wb)
     wb.save(OUTPUT)
     print(f"Plantilla generada: {OUTPUT}")
 

@@ -11,25 +11,22 @@ $imagenes = $color['imagenes'] ?? [];
 if (!is_array($imagenes)) {
     $imagenes = [];
 }
-$codigoInv = $color['codigo_inventario'] ?? '';
-if ($codigoInv === '' && !empty($color['sku_sin_talla'])) {
-    $codigoInv = preg_replace('/-\d+$/', '', $color['sku_sin_talla']) ?? '';
-}
+$codigoColor = (string) ($color['codigo'] ?? ('C' . ((int) $indiceColor + 1)));
 ?>
 <div class="admin-repeater admin-repeater--color" data-repeater="color">
-    <button type="button" class="admin-repeater__quitar" data-remove>Quitar color</button>
-    <h3 class="admin-repeater__titulo">Color <?= is_numeric($indiceColor) ? ((int) $indiceColor + 1) : '' ?></h3>
+    <?php if (is_numeric($indiceColor) && (int) $indiceColor > 0): ?>
+        <button type="button" class="admin-repeater__quitar" data-remove>Quitar color</button>
+    <?php endif; ?>
+    <h3 class="admin-repeater__titulo"><?= is_numeric($indiceColor) && (int) $indiceColor > 0 ? 'Color ' . ((int) $indiceColor + 1) : 'Imágenes del producto' ?></h3>
 
-    <div class="admin-field">
-        <label>Código de inventario</label>
-        <input
-            type="text"
-            name="colores[codigo_inventario][]"
-            value="<?= h($codigoInv) ?>"
-            placeholder="Ej. KDF-SPL-RJN (opcional)"
-        >
-        <p class="admin-hint">Para SKU y pedidos por WhatsApp. Si lo dejas vacío, se genera automáticamente.</p>
-    </div>
+    <input type="hidden" name="colores[codigo][]" value="<?= h($codigoColor) ?>">
+
+    <?php if (is_numeric($indiceColor) && (int) $indiceColor > 0): ?>
+        <div class="admin-field">
+            <label>Color</label>
+            <input type="text" name="colores[etiqueta][]" value="<?= h($color['etiqueta'] ?? '') ?>" placeholder="Ej. Rojo" required>
+        </div>
+    <?php endif; ?>
 
     <div class="admin-upload-grid" data-upload-previews>
         <?php foreach (imagenes_vistas_etiquetas() as $vista => $etiqueta): ?>
@@ -51,7 +48,7 @@ if ($codigoInv === '' && !empty($color['sku_sin_talla'])) {
 
     <div class="admin-field admin-upload-lote">
         <label class="admin-upload-lote__label" for="colores-lote-<?= h((string) $indiceColor) ?>">
-            Fotos del color (6 vistas)
+            Reemplazar fotos (opcional)
         </label>
         <input
             type="file"
@@ -62,40 +59,10 @@ if ($codigoInv === '' && !empty($color['sku_sin_talla'])) {
             class="admin-upload-lote__input"
         >
         <p class="admin-hint">
-            Selecciona las 6 imágenes a la vez. Cada archivo debe incluir en el nombre la vista:
+            Sube solo si quieres cambiar imágenes. Cada archivo debe incluir la vista en el nombre:
             <strong>derecha</strong>, <strong>izquierda</strong>, <strong>frente</strong>,
-            <strong>posterior</strong>, <strong>arriba</strong> o <strong>abajo</strong>
-            (por ejemplo <code>modelo_derecha.jpg</code>).
+            <strong>posterior</strong>, <strong>arriba</strong> o <strong>abajo</strong>.
         </p>
         <ul class="admin-upload-lote__avisos" hidden></ul>
     </div>
-
-    <?php
-    $tallasProducto = $tallasProducto ?? [];
-    $variantesColor = $color['variantes'] ?? $color['tallas_disponibles'] ?? [];
-    $tallasConNumero = array_values(array_filter($tallasProducto, static function (array $talla): bool {
-        return trim((string) ($talla['numero'] ?? '')) !== '';
-    }));
-    ?>
-    <?php if ($tallasConNumero !== []): ?>
-        <div class="admin-variantes">
-            <p class="admin-variantes__titulo">Stock por talla (este color)</p>
-            <p class="admin-hint">Marca «Agotada» solo la combinación color + talla vendida. Ej. SKU REF-C1-36.</p>
-            <div class="admin-variantes__grid">
-                <?php foreach ($tallasConNumero as $talla): ?>
-                    <?php
-                    $numeroTalla = (string) ($talla['numero'] ?? '');
-                    $disponibleVariante = $variantesColor[$numeroTalla] ?? !empty($talla['disponible']);
-                    ?>
-                    <label class="admin-variante">
-                        <span class="admin-variante__num">Talla <?= h($numeroTalla) ?></span>
-                        <select name="colores[variantes][<?= h((string) $indiceColor) ?>][<?= h($numeroTalla) ?>]">
-                            <option value="1" <?= $disponibleVariante ? 'selected' : '' ?>>Disponible</option>
-                            <option value="0" <?= !$disponibleVariante ? 'selected' : '' ?>>Agotada</option>
-                        </select>
-                    </label>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    <?php endif; ?>
 </div>

@@ -5,6 +5,7 @@ require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/imagenes_producto.php';
 require_once __DIR__ . '/series_tallas.php';
 require_once __DIR__ . '/categorias_tienda.php';
+require_once __DIR__ . '/repositorio_series.php';
 
 function db_migrar_quitar_activo_orden(): void
 {
@@ -20,6 +21,186 @@ function db_migrar_quitar_activo_orden(): void
     }
 
     $pdo->exec('ALTER TABLE productos DROP COLUMN activo, DROP COLUMN orden');
+}
+
+function db_migrar_quitar_beneficios_bullets(): void
+{
+    static $migrado = false;
+    if ($migrado) {
+        return;
+    }
+
+    $pdo = db();
+    $stmtTabla = $pdo->query("SHOW TABLES LIKE 'producto_beneficios'");
+    $tieneBeneficios = (bool) $stmtTabla->fetch();
+    $stmtColumna = $pdo->query("SHOW COLUMNS FROM productos LIKE 'bullets'");
+    $tieneBullets = (bool) $stmtColumna->fetch();
+
+    if (!$tieneBeneficios && !$tieneBullets) {
+        $migrado = true;
+
+        return;
+    }
+
+    if ($tieneBullets || $tieneBeneficios) {
+        $stmtProductos = $pdo->query(
+            $tieneBullets
+                ? 'SELECT id, descripcion, bullets FROM productos'
+                : 'SELECT id, descripcion FROM productos'
+        );
+        $stmtActualizar = $pdo->prepare('UPDATE productos SET descripcion = :descripcion WHERE id = :id');
+        $stmtBeneficios = $tieneBeneficios
+            ? $pdo->prepare(
+                'SELECT titulo, texto FROM producto_beneficios
+                 WHERE producto_id = :id ORDER BY orden ASC, id ASC'
+            )
+            : null;
+
+        foreach ($stmtProductos->fetchAll() as $fila) {
+            $partes = [];
+            $descripcion = trim((string) ($fila['descripcion'] ?? ''));
+
+            if ($tieneBullets) {
+                $bullets = json_decode((string) ($fila['bullets'] ?? '[]'), true);
+                if (is_array($bullets)) {
+                    foreach ($bullets as $bullet) {
+                        $texto = trim((string) $bullet);
+                        if ($texto !== '') {
+                            $partes[] = $texto;
+                        }
+                    }
+                }
+            }
+
+            if ($stmtBeneficios !== null) {
+                $stmtBeneficios->execute(['id' => (int) $fila['id']]);
+                foreach ($stmtBeneficios->fetchAll() as $beneficio) {
+                    $titulo = trim((string) ($beneficio['titulo'] ?? ''));
+                    $texto = trim((string) ($beneficio['texto'] ?? ''));
+                    if ($titulo === '' && $texto === '') {
+                        continue;
+                    }
+                    $partes[] = $titulo !== '' && $texto !== ''
+                        ? $titulo . ': ' . $texto
+                        : ($titulo !== '' ? $titulo : $texto);
+                }
+            }
+
+            if ($partes === []) {
+                continue;
+            }
+
+            $extra = implode("\n", $partes);
+            $nuevaDescripcion = $descripcion !== '' ? $descripcion . "\n\n" . $extra : $extra;
+            $stmtActualizar->execute([
+                'descripcion' => $nuevaDescripcion,
+                'id' => (int) $fila['id'],
+            ]);
+        }
+    }
+
+    if ($tieneBeneficios) {
+        $pdo->exec('DROP TABLE IF EXISTS producto_beneficios');
+    }
+
+    if ($tieneBullets) {
+        $pdo->exec('ALTER TABLE productos DROP COLUMN bullets');
+    }
+
+    $migrado = true;
+}
+
+function db_migrar_quitar_tags(): void
+{
+    static $migrado = false;
+    if ($migrado) {
+        return;
+    }
+
+    $pdo = db();
+    $stmt = $pdo->query("SHOW COLUMNS FROM productos LIKE 'tags'");
+    if (!$stmt->fetch()) {
+        $migrado = true;
+
+        return;
+    }
+
+    $pdo->exec('ALTER TABLE productos DROP COLUMN tags');
+    $migrado = true;
+}
+
+function db_drop_foreign_key_if_exists(string $tabla, string $nombreFk): void
+{
+    $pdo = db();
+    $stmt = $pdo->prepare(
+        'SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+         WHERE CONSTRAINT_SCHEMA = DATABASE()
+           AND TABLE_NAME = ?
+           AND CONSTRAINT_NAME = ?
+           AND CONSTRAINT_TYPE = \'FOREIGN KEY\''
+    );
+    $stmt->execute([$tabla, $nombreFk]);
+    if ($stmt->fetch()) {
+        $pdo->exec('ALTER TABLE `' . str_replace('`', '', $tabla) . '` DROP FOREIGN KEY `' . str_replace('`', '', $nombreFk) . '`');
+    }
+}
+
+function db_migrar_pedidos_fk_set_null(): void
+{
+    static $migrado = false;
+    if ($migrado) {
+        return;
+    }
+
+    $pdo = db();
+    $stmtTabla = $pdo->query("SHOW TABLES LIKE 'pedidos'");
+    if (!$stmtTabla->fetch()) {
+        $migrado = true;
+
+        return;
+    }
+
+    $ajustes = [
+        'inventario_variante_id' => ['fk_pedidos_variante', 'inventario_variantes', 'id'],
+        'producto_id' => ['fk_pedidos_producto', 'productos', 'id'],
+        'producto_color_id' => ['fk_pedidos_color', 'producto_colores', 'id'],
+        'producto_talla_id' => ['fk_pedidos_talla', 'producto_tallas', 'id'],
+    ];
+
+    foreach ($ajustes as $columna => [$nombreFk, $tablaRef, $colRef]) {
+        $stmtRegla = $pdo->prepare(
+            'SELECT DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS
+             WHERE CONSTRAINT_SCHEMA = DATABASE()
+               AND TABLE_NAME = \'pedidos\'
+               AND CONSTRAINT_NAME = ?'
+        );
+        $stmtRegla->execute([$nombreFk]);
+        $regla = $stmtRegla->fetchColumn();
+
+        $stmtColumna = $pdo->query('SHOW COLUMNS FROM pedidos LIKE ' . $pdo->quote($columna));
+        $columnaInfo = $stmtColumna->fetch();
+        $esNullable = $columnaInfo && strtoupper((string) ($columnaInfo['Null'] ?? '')) === 'YES';
+
+        if ($regla === 'SET NULL' && $esNullable) {
+            continue;
+        }
+
+        db_drop_foreign_key_if_exists('pedidos', $nombreFk);
+
+        if ($columnaInfo && !$esNullable) {
+            $pdo->exec('ALTER TABLE pedidos MODIFY `' . $columna . '` INT UNSIGNED NULL');
+        }
+
+        if ($regla !== 'SET NULL') {
+            $pdo->exec(
+                'ALTER TABLE pedidos ADD CONSTRAINT `' . $nombreFk . '`
+                 FOREIGN KEY (`' . $columna . '`) REFERENCES `' . $tablaRef . '` (`' . $colRef . '`)
+                 ON DELETE SET NULL'
+            );
+        }
+    }
+
+    $migrado = true;
 }
 
 function db_migrar_precio_serie(): void
@@ -51,7 +232,7 @@ function db_migrar_categoria(): void
     $stmt = $pdo->query("SHOW COLUMNS FROM productos LIKE 'categoria'");
     if (!$stmt->fetch()) {
         $pdo->exec(
-            "ALTER TABLE productos ADD COLUMN categoria VARCHAR(50) NOT NULL DEFAULT 'zapatillas' AFTER tags"
+            "ALTER TABLE productos ADD COLUMN categoria VARCHAR(50) NOT NULL DEFAULT 'zapatillas' AFTER descripcion"
         );
     }
 
@@ -62,6 +243,8 @@ function productos_listar_por_categoria(string $categoria): array
 {
     db_migrar_categoria();
     db_migrar_quitar_activo_orden();
+    db_migrar_quitar_beneficios_bullets();
+    db_migrar_quitar_tags();
 
     $categoria = categoria_normalizar($categoria);
     if (!categoria_es_valida($categoria)) {
@@ -79,16 +262,16 @@ function productos_listar_por_categoria(string $categoria): array
     $productos = [];
     foreach ($stmt->fetchAll() as $fila) {
         $productoId = (int) $fila['id'];
-        if (!producto_tiene_foto_catalogo($productoId)) {
+        if (!producto_tiene_foto_tienda($productoId)) {
             continue;
         }
 
-        [$colores, $tallas, $beneficios, $variantes] = producto_cargar_relaciones($productoId);
+        [$colores, $tallas, $variantes] = producto_cargar_relaciones($productoId);
         if ($colores === []) {
             continue;
         }
         $colores = producto_aplicar_variantes_a_colores($colores, $tallas, $variantes, $productoId);
-        $productos[] = producto_formatear_catalogo($fila, $colores, $tallas, $beneficios, $variantes);
+        $productos[] = producto_formatear_tienda($fila, $colores, $tallas, $variantes);
     }
 
     return $productos;
@@ -450,23 +633,53 @@ function producto_aplicar_variantes_a_colores(array $colores, array $tallas, arr
     }, $colores);
 }
 
-function producto_formatear_catalogo(array $fila, array $colores, array $tallas, array $beneficios, array $variantes = []): array
+function producto_titulo_tienda(array $producto): string
 {
-    $bullets = json_decode($fila['bullets'] ?? '[]', true);
-    $tags = json_decode($fila['tags'] ?? '[]', true);
+    require_once __DIR__ . '/categorias_tienda.php';
+
+    $partes = [
+        categoria_etiqueta((string) ($producto['categoria'] ?? CATEGORIA_HOME_DEFAULT)),
+        trim((string) ($producto['modelo'] ?? $producto['nombre'] ?? '')),
+        trim((string) ($producto['tipo'] ?? '')),
+    ];
+
+    $partes = array_values(array_filter($partes, static fn (string $parte): bool => $parte !== ''));
+
+    return implode(' ', $partes);
+}
+
+function producto_formatear_tienda(array $fila, array $colores, array $tallas, array $variantes = []): array
+{
+    require_once __DIR__ . '/repositorio_guias.php';
+
+    $productoId = (int) $fila['id'];
+    $serieSlug = series_resolver_slug_producto((string) ($fila['serie'] ?? 'escolar'));
+    $guia = guia_obtener($productoId, $serieSlug);
 
     return [
-        'id' => (string) $fila['id'],
+        'id' => (string) $productoId,
         'marca' => $fila['marca'],
         'nombre' => $fila['nombre'],
+        'modelo' => $fila['modelo'] ?? $fila['nombre'],
+        'tipo' => $fila['tipo'] ?? '',
+        'publico' => $fila['publico'] ?? 'unisex',
+        'titulo_tienda' => producto_titulo_tienda([
+            'categoria' => categoria_normalizar((string) ($fila['categoria'] ?? CATEGORIA_HOME_DEFAULT)),
+            'modelo' => $fila['modelo'] ?? $fila['nombre'],
+            'tipo' => $fila['tipo'] ?? '',
+            'nombre' => $fila['nombre'],
+        ]),
         'descripcion' => $fila['descripcion'],
-        'bullets' => is_array($bullets) ? $bullets : [],
-        'tags' => is_array($tags) ? $tags : [],
         'categoria' => categoria_normalizar((string) ($fila['categoria'] ?? CATEGORIA_HOME_DEFAULT)),
         'precio' => (float) $fila['precio'],
         'precio_anterior' => (float) ($fila['precio_anterior'] ?? 0),
         'aplicar_descuento' => producto_leer_aplicar_descuento($fila),
-        'serie' => series_normalizar((string) ($fila['serie'] ?? 'escolar')),
+        'serie' => $serieSlug,
+        'guia_titulo' => $guia['titulo'] ?? '',
+        'guia_pdf' => $guia ? trim((string) ($guia['archivo_pdf'] ?? '')) : '',
+        'guia_html' => ($guia && trim((string) ($guia['archivo_pdf'] ?? '')) === '')
+            ? guia_render_html($guia)
+            : '',
         'descuento_pct' => producto_descuento_porcentaje(
             (float) $fila['precio'],
             (float) ($fila['precio_anterior'] ?? 0)
@@ -495,13 +708,6 @@ function producto_formatear_catalogo(array $fila, array $colores, array $tallas,
                 'disponible' => (bool) $talla['disponible'],
             ];
         }, $tallas),
-        'beneficios' => array_map(static function (array $beneficio): array {
-            return [
-                'icono' => $beneficio['icono'],
-                'titulo' => $beneficio['titulo'],
-                'texto' => $beneficio['texto'],
-            ];
-        }, $beneficios),
     ];
 }
 
@@ -523,17 +729,42 @@ function producto_cargar_relaciones(int $productoId): array
     $stmtTallas->execute(['id' => $productoId]);
     $tallas = $stmtTallas->fetchAll();
 
-    $stmtBeneficios = $pdo->prepare(
-        'SELECT icono, titulo, texto FROM producto_beneficios WHERE producto_id = :id ORDER BY orden ASC, id ASC'
-    );
-    $stmtBeneficios->execute(['id' => $productoId]);
-    $beneficios = $stmtBeneficios->fetchAll();
+    return [$colores, $tallas, producto_cargar_variantes($productoId)];
+}
 
-    return [$colores, $tallas, $beneficios, producto_cargar_variantes($productoId)];
+function producto_inventario_stock_pares(int $productoId): array
+{
+    if (!db_tiene_inventario_variantes()) {
+        return [];
+    }
+
+    $pdo = db();
+    $stmt = $pdo->prepare(
+        'SELECT pc.codigo AS color_codigo, pt.numero AS talla_numero,
+                GREATEST(0, iv.stock - iv.stock_reservado) AS pares
+         FROM inventario_variantes iv
+         INNER JOIN producto_colores pc ON pc.id = iv.producto_color_id
+         INNER JOIN producto_tallas pt ON pt.id = iv.producto_talla_id
+         WHERE iv.producto_id = :id
+         ORDER BY pc.orden ASC, pc.id ASC, pt.orden ASC, pt.id ASC'
+    );
+    $stmt->execute(['id' => $productoId]);
+    $mapa = [];
+    foreach ($stmt->fetchAll() as $fila) {
+        $codigo = (string) $fila['color_codigo'];
+        if (!isset($mapa[$codigo])) {
+            $mapa[$codigo] = [];
+        }
+        $mapa[$codigo][(string) $fila['talla_numero']] = (int) $fila['pares'];
+    }
+
+    return $mapa;
 }
 
 function producto_obtener_admin(int $id): ?array
 {
+    db_migrar_quitar_beneficios_bullets();
+    db_migrar_quitar_tags();
     $pdo = db();
     $stmt = $pdo->prepare('SELECT * FROM productos WHERE id = :id LIMIT 1');
     $stmt->execute(['id' => $id]);
@@ -543,24 +774,73 @@ function producto_obtener_admin(int $id): ?array
         return null;
     }
 
-    [$colores, $tallas, $beneficios, $variantes] = producto_cargar_relaciones($id);
+    [$colores, $tallas, $variantes] = producto_cargar_relaciones($id);
     $colores = producto_aplicar_variantes_a_colores($colores, $tallas, $variantes, $id);
+    $producto = producto_formatear_tienda($fila, $colores, $tallas, $variantes);
+    $producto['inventario_stock'] = producto_inventario_stock_pares($id);
 
-    return producto_formatear_catalogo($fila, $colores, $tallas, $beneficios, $variantes);
+    return $producto;
 }
 
 function productos_listar_admin(): array
 {
     db_migrar_quitar_activo_orden();
-    $pdo = db();
+    require_once __DIR__ . '/imagenes_producto.php';
+    require_once __DIR__ . '/categorias_tienda.php';
 
-    return $pdo->query(
-        'SELECT id, marca, nombre, precio, actualizado_en FROM productos ORDER BY id DESC'
+    $pdo = db();
+    $filas = $pdo->query(
+        'SELECT p.id, p.marca, p.nombre, p.modelo, p.tipo, p.categoria, p.precio, p.actualizado_en,
+                pc.imagen, pc.imagenes
+         FROM productos p
+         LEFT JOIN producto_colores pc ON pc.producto_id = p.id
+           AND pc.id = (
+               SELECT MIN(pc2.id) FROM producto_colores pc2 WHERE pc2.producto_id = p.id
+           )
+         ORDER BY p.id DESC'
     )->fetchAll();
+
+    return array_map(static function (array $fila): array {
+        $color = imagenes_normalizar_color([
+            'imagen' => $fila['imagen'] ?? '',
+            'imagenes' => $fila['imagenes'] ?? '',
+        ]);
+        $thumb = imagen_thumbnail($color);
+        if ($thumb === '') {
+            $thumb = $color['imagenes']['derecha'] ?? $color['imagen'] ?? '';
+        }
+        $tieneFoto = ($color['imagenes']['derecha'] ?? '') !== '' || ($color['imagen'] ?? '') !== '';
+
+        return [
+            'id' => (int) $fila['id'],
+            'marca' => (string) $fila['marca'],
+            'nombre' => (string) $fila['nombre'],
+            'precio' => (float) $fila['precio'],
+            'actualizado_en' => $fila['actualizado_en'],
+            'categoria' => categoria_normalizar((string) ($fila['categoria'] ?? CATEGORIA_HOME_DEFAULT)),
+            'titulo_tienda' => producto_titulo_tienda([
+                'categoria' => $fila['categoria'] ?? '',
+                'modelo' => $fila['modelo'] ?? $fila['nombre'],
+                'tipo' => $fila['tipo'] ?? '',
+                'nombre' => $fila['nombre'],
+            ]),
+            'imagen_thumb' => $thumb,
+            'tiene_foto' => $tieneFoto,
+        ];
+    }, $filas);
+}
+
+function producto_url_en_home(int $id, string $categoria): string
+{
+    require_once __DIR__ . '/categorias_tienda.php';
+
+    return 'home.php?categoria=' . rawurlencode(categoria_normalizar($categoria)) . '#producto-' . $id;
 }
 
 function producto_obtener(int $id): ?array
 {
+    db_migrar_quitar_beneficios_bullets();
+    db_migrar_quitar_tags();
     $pdo = db();
     $stmt = $pdo->prepare('SELECT * FROM productos WHERE id = :id LIMIT 1');
     $stmt->execute(['id' => $id]);
@@ -570,13 +850,13 @@ function producto_obtener(int $id): ?array
         return null;
     }
 
-    [$colores, $tallas, $beneficios, $variantes] = producto_cargar_relaciones($id);
+    [$colores, $tallas, $variantes] = producto_cargar_relaciones($id);
     $colores = producto_aplicar_variantes_a_colores($colores, $tallas, $variantes, $id);
 
-    return producto_formatear_catalogo($fila, $colores, $tallas, $beneficios, $variantes);
+    return producto_formatear_tienda($fila, $colores, $tallas, $variantes);
 }
 
-function producto_tiene_foto_catalogo(int $productoId): bool
+function producto_tiene_foto_tienda(int $productoId): bool
 {
     $pdo = db();
     $stmt = $pdo->prepare(
@@ -600,7 +880,7 @@ function productos_listar_sin_foto(): array
 {
     $pendientes = [];
     foreach (productos_listar_admin() as $fila) {
-        if (!producto_tiene_foto_catalogo((int) $fila['id'])) {
+        if (!producto_tiene_foto_tienda((int) $fila['id'])) {
             $pendientes[] = $fila;
         }
     }
@@ -611,14 +891,23 @@ function productos_listar_sin_foto(): array
 function producto_guardar(?int $id, array $datos): int
 {
     db_migrar_quitar_activo_orden();
+    db_migrar_quitar_beneficios_bullets();
+    db_migrar_quitar_tags();
+    db_migrar_series_carga();
+    db_migrar_variantes();
+
+    $categoria = categoria_desde_request((string) ($datos['categoria'] ?? CATEGORIA_HOME_DEFAULT));
+    $publico = publico_es_valido((string) ($datos['publico'] ?? 'unisex'))
+        ? (string) $datos['publico']
+        : 'unisex';
+    $serieSlug = series_resolver_slug_producto((string) ($datos['serie'] ?? 'SERIE_JUVENIL'));
+
     $pdo = db();
     $pdo->beginTransaction();
     $productoId = 0;
 
     try {
         $stockPreservado = [];
-        $bullets = json_encode(array_values($datos['bullets'] ?? []), JSON_UNESCAPED_UNICODE);
-        $tags = json_encode(array_values($datos['tags'] ?? []), JSON_UNESCAPED_UNICODE);
 
         $precioAnterior = (float) ($datos['precio_anterior'] ?? 0);
         $precio = (float) ($datos['precio'] ?? 0);
@@ -628,29 +917,31 @@ function producto_guardar(?int $id, array $datos): int
 
         if ($id === null) {
             $stmt = $pdo->prepare(
-                'INSERT INTO productos (marca, nombre, descripcion, bullets, tags, categoria, precio, precio_anterior,
-                 aplicar_descuento, serie, color_default)
-                 VALUES (:marca, :nombre, :descripcion, :bullets, :tags, :categoria, :precio, :precio_anterior,
-                 :aplicar_descuento, :serie, :color_default)'
+                'INSERT INTO productos (marca, nombre, modelo, tipo, descripcion, categoria, publico,
+                 precio, precio_anterior, aplicar_descuento, serie, color_default)
+                 VALUES (:marca, :nombre, :modelo, :tipo, :descripcion, :categoria, :publico,
+                 :precio, :precio_anterior, :aplicar_descuento, :serie, :color_default)'
             );
             $stmt->execute([
                 'marca' => $datos['marca'],
                 'nombre' => $datos['nombre'],
+                'modelo' => trim((string) ($datos['modelo'] ?? $datos['nombre'] ?? '')),
+                'tipo' => trim((string) ($datos['tipo'] ?? '')),
                 'descripcion' => $datos['descripcion'],
-                'bullets' => $bullets,
-                'tags' => $tags,
-                'categoria' => categoria_desde_request((string) ($datos['categoria'] ?? CATEGORIA_HOME_DEFAULT)),
+                'categoria' => $categoria,
+                'publico' => $publico,
                 'precio' => $precio,
                 'precio_anterior' => $precioAnterior,
                 'aplicar_descuento' => !empty($datos['aplicar_descuento']) ? 1 : 0,
-                'serie' => series_normalizar((string) ($datos['serie'] ?? 'escolar')),
+                'serie' => $serieSlug,
                 'color_default' => $datos['color_default'],
             ]);
             $productoId = (int) $pdo->lastInsertId();
         } else {
             $stmt = $pdo->prepare(
-                'UPDATE productos SET marca = :marca, nombre = :nombre, descripcion = :descripcion,
-                 bullets = :bullets, tags = :tags, categoria = :categoria, precio = :precio, precio_anterior = :precio_anterior,
+                'UPDATE productos SET marca = :marca, nombre = :nombre, modelo = :modelo, tipo = :tipo,
+                 descripcion = :descripcion, categoria = :categoria,
+                 publico = :publico, precio = :precio, precio_anterior = :precio_anterior,
                  aplicar_descuento = :aplicar_descuento, serie = :serie, color_default = :color_default
                  WHERE id = :id'
             );
@@ -658,14 +949,15 @@ function producto_guardar(?int $id, array $datos): int
                 'id' => $id,
                 'marca' => $datos['marca'],
                 'nombre' => $datos['nombre'],
+                'modelo' => trim((string) ($datos['modelo'] ?? $datos['nombre'] ?? '')),
+                'tipo' => trim((string) ($datos['tipo'] ?? '')),
                 'descripcion' => $datos['descripcion'],
-                'bullets' => $bullets,
-                'tags' => $tags,
-                'categoria' => categoria_desde_request((string) ($datos['categoria'] ?? CATEGORIA_HOME_DEFAULT)),
+                'categoria' => $categoria,
+                'publico' => $publico,
                 'precio' => $precio,
                 'precio_anterior' => $precioAnterior,
                 'aplicar_descuento' => !empty($datos['aplicar_descuento']) ? 1 : 0,
-                'serie' => series_normalizar((string) ($datos['serie'] ?? 'escolar')),
+                'serie' => $serieSlug,
                 'color_default' => $datos['color_default'],
             ]);
             $productoId = $id;
@@ -674,7 +966,6 @@ function producto_guardar(?int $id, array $datos): int
             $pdo->prepare('DELETE FROM producto_variantes WHERE producto_id = :id')->execute(['id' => $productoId]);
             $pdo->prepare('DELETE FROM producto_colores WHERE producto_id = :id')->execute(['id' => $productoId]);
             $pdo->prepare('DELETE FROM producto_tallas WHERE producto_id = :id')->execute(['id' => $productoId]);
-            $pdo->prepare('DELETE FROM producto_beneficios WHERE producto_id = :id')->execute(['id' => $productoId]);
         }
 
         $stmtColor = $pdo->prepare(
@@ -710,20 +1001,6 @@ function producto_guardar(?int $id, array $datos): int
             ]);
         }
 
-        $stmtBeneficio = $pdo->prepare(
-            'INSERT INTO producto_beneficios (producto_id, icono, titulo, texto, orden)
-             VALUES (:producto_id, :icono, :titulo, :texto, :orden)'
-        );
-        foreach ($datos['beneficios'] as $i => $beneficio) {
-            $stmtBeneficio->execute([
-                'producto_id' => $productoId,
-                'icono' => $beneficio['icono'],
-                'titulo' => $beneficio['titulo'],
-                'texto' => $beneficio['texto'],
-                'orden' => $i,
-            ]);
-        }
-
         $stmtVariante = $pdo->prepare(
             'INSERT INTO producto_variantes (producto_id, color_codigo, talla_numero, disponible)
              VALUES (:producto_id, :color_codigo, :talla_numero, :disponible)'
@@ -750,7 +1027,9 @@ function producto_guardar(?int $id, array $datos): int
 
         $pdo->commit();
     } catch (Throwable $e) {
-        $pdo->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         throw $e;
     }
 
@@ -759,9 +1038,15 @@ function producto_guardar(?int $id, array $datos): int
 
 function producto_eliminar(int $id): void
 {
+    db_migrar_pedidos_fk_set_null();
+
     $pdo = db();
     $stmt = $pdo->prepare('DELETE FROM productos WHERE id = :id');
     $stmt->execute(['id' => $id]);
+
+    if ($stmt->rowCount() === 0) {
+        throw new RuntimeException('Producto no encontrado.');
+    }
 }
 
 function producto_importar_desde_array(array $producto, int $orden): int
@@ -770,8 +1055,6 @@ function producto_importar_desde_array(array $producto, int $orden): int
         'marca' => $producto['marca'] ?? '',
         'nombre' => $producto['nombre'] ?? '',
         'descripcion' => $producto['descripcion'] ?? '',
-        'bullets' => $producto['bullets'] ?? [],
-        'tags' => $producto['tags'] ?? [],
         'precio' => (float) ($producto['precio'] ?? 0),
         'precio_anterior' => (float) ($producto['precio_anterior'] ?? 0),
         'aplicar_descuento' => producto_leer_aplicar_descuento($producto),
@@ -779,7 +1062,6 @@ function producto_importar_desde_array(array $producto, int $orden): int
         'color_default' => $producto['color_default'] ?? '',
         'colores' => $producto['colores'] ?? [],
         'tallas' => $producto['tallas'] ?? [],
-        'beneficios' => $producto['beneficios'] ?? [],
     ]);
 }
 

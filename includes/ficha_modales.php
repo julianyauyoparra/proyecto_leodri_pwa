@@ -1,7 +1,5 @@
 <?php
 declare(strict_types=1);
-
-require_once __DIR__ . '/series_tallas.php';
 ?>
 <div
     class="ficha-detalles"
@@ -19,20 +17,26 @@ require_once __DIR__ . '/series_tallas.php';
         </header>
         <div class="ficha-detalles__cuerpo">
             <div class="ficha-detalles__contenido" data-detalles-contenido></div>
-            <section class="ficha-detalles__guia" data-detalles-guia-wrap>
-                <h3 class="ficha-detalles__subtitulo" data-detalles-guia-titulo>Guía de tallas</h3>
-                <div data-detalles-guia></div>
-            </section>
         </div>
     </div>
 </div>
 
-<div id="ficha-guias-serie" hidden>
-    <?php foreach (series_opciones() as $clave => $etiqueta): ?>
-        <div class="ficha-guia-serie" data-serie="<?= h($clave) ?>" data-titulo="<?= h(series_guia_titulo($clave)) ?>">
-            <?= series_render_guia_html($clave) ?>
-        </div>
-    <?php endforeach; ?>
+<div
+    class="ficha-guia"
+    id="ficha-guia"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="ficha-guia-titulo"
+    aria-hidden="true"
+>
+    <div class="ficha-guia__backdrop" data-guia-cerrar></div>
+    <div class="ficha-guia__sheet">
+        <header class="ficha-guia__cabecera">
+            <h2 class="ficha-guia__titulo" id="ficha-guia-titulo">Guía de tallas</h2>
+            <button type="button" class="ficha-guia__cerrar" aria-label="Cerrar guía de tallas">&times;</button>
+        </header>
+        <div class="ficha-guia__cuerpo" data-guia-contenido></div>
+    </div>
 </div>
 
 <div

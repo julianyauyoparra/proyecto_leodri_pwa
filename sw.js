@@ -1,16 +1,15 @@
 /**
  * LEODRI.pe V2 — Service Worker
- * Catálogo cacheado + actualizaciones silenciosas en segundo plano.
+ * Assets estáticos cacheados + actualizaciones silenciosas en segundo plano.
  * Al desplegar cambios, incrementa CACHE_VERSION.
  */
-const CACHE_VERSION = 'leodri-v46';
+const CACHE_VERSION = 'leodri-v56';
 
 const PRECACHE_URLS = [
     './',
     './index.php',
     './home.php',
     './index.html',
-    './data/catalogo.json',
     './offline.html',
     './manifest.webmanifest',
     './css/ficha.css',

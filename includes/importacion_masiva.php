@@ -224,8 +224,6 @@ function importacion_fila_a_producto(array $fila): array
             'marca' => $fila['marca'],
             'nombre' => $fila['nombre'],
             'descripcion' => $descripcion,
-            'bullets' => [],
-            'tags' => [],
             'precio' => $precio,
             'precio_anterior' => producto_precio_anterior_sugerido($precio),
             'aplicar_descuento' => true,
@@ -249,13 +247,12 @@ function importacion_fila_a_producto(array $fila): array
                     'disponible' => $t['disponible'],
                 ];
             }, $tallas),
-            'beneficios' => [],
         ],
         'stock_mapa' => $stockMapa,
     ];
 }
 
-function inventario_aplicar_stock_inicial(int $productoId, string $colorCodigo, array $stockPorTalla): void
+function inventario_aplicar_stock_inicial(int $productoId, string $colorCodigo, array $stockPorTalla, array $disponiblePorTalla = []): void
 {
     db_migrar_variantes();
     $pdo = db();
@@ -267,11 +264,15 @@ function inventario_aplicar_stock_inicial(int $productoId, string $colorCodigo, 
 
     foreach ($stockPorTalla as $talla => $cantidad) {
         $cantidad = max(0, (int) $cantidad);
+        $tallaStr = (string) $talla;
+        $disponible = array_key_exists($tallaStr, $disponiblePorTalla)
+            ? !empty($disponiblePorTalla[$tallaStr])
+            : $cantidad > 0;
         $stmtVariante->execute([
-            'disponible' => $cantidad > 0 ? 1 : 0,
+            'disponible' => $disponible ? 1 : 0,
             'id' => $productoId,
             'color' => $colorCodigo,
-            'talla' => (string) $talla,
+            'talla' => $tallaStr,
         ]);
     }
 

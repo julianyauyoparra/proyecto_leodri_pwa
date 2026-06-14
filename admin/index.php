@@ -16,7 +16,7 @@ admin_layout_inicio('Dashboard', true, 'admin-body--dashboard');
     <h1 class="admin-dashboard__titulo">Dashboard</h1>
 
     <div class="admin-dashboard__grid">
-        <a href="producto.php" class="admin-dashboard__card">
+        <a href="carga_individual.php" class="admin-dashboard__card">
             <span class="admin-dashboard__icono" aria-hidden="true">
                 <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="14" y="10" width="44" height="52" rx="4" stroke="currentColor" stroke-width="3"/>

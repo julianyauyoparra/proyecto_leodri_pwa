@@ -21,7 +21,7 @@ $tituloSeccion = categoria_etiqueta($categoriaActiva);
     <?php if ($productosHome === []): ?>
         <p class="home-seccion__vacio">No hay productos en <?= h($tituloSeccion) ?> por ahora.</p>
     <?php else: ?>
-        <div class="home-catalogo" role="list">
+        <div class="home-productos-grid" role="list">
             <?php foreach ($productosHome as $producto): ?>
                 <?php require __DIR__ . '/ficha_home.php'; ?>
             <?php endforeach; ?>
